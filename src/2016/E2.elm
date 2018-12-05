@@ -1,0 +1,157 @@
+module E2 exposing (..)
+
+import Char
+import Dict exposing (Dict)
+import Helpers as H
+import Html
+
+
+main =
+    Html.div []
+        [ Html.text <| toString <| (H.ts >> List.reverse >> String.join "") r1
+        , Html.text <| toString <| (H.ts >> List.reverse >> List.filterMap identity >> String.join "") r2
+        , Html.text <| toString <| at2 ( 2, 2 )
+        ]
+
+
+type Move
+    = U
+    | D
+    | R
+    | L
+
+
+keypad =
+    [ [ "1", "2", "3" ]
+    , [ "4", "5", "6" ]
+    , [ "7", "8", "9" ]
+    ]
+
+
+keypad2 =
+    [ [ H.jN, H.jN, H.jJ "1", H.jN, H.jN ]
+    , [ H.jN, H.jJ "2", H.jJ "3", H.jJ "4", H.jN ]
+    , [ H.jJ "5", H.jJ "6", H.jJ "7", H.jJ "8", H.jJ "9" ]
+    , [ H.jN, H.jJ "A", H.jJ "B", H.jJ "C", H.jN ]
+    , [ H.jN, H.jN, H.jJ "D", H.jN, H.jN ]
+    ]
+
+
+at2 ( x, y ) =
+    case List.drop y keypad2 |> List.head of
+        Nothing ->
+            Nothing
+
+        Just r ->
+            List.drop x r |> List.head |> Maybe.andThen identity
+
+
+vector move =
+    case move of
+        U ->
+            ( -1, 0 )
+
+        D ->
+            ( 1, 0 )
+
+        R ->
+            ( 0, 1 )
+
+        L ->
+            ( 0, -1 )
+
+
+type alias State =
+    { x : Int, y : Int }
+
+
+makeMove move s =
+    let
+        v =
+            vector move
+    in
+    State (a s.x <| H.ts v) (a s.y <| H.tf v)
+
+
+makeMove2 move s =
+    let
+        v =
+            vector move
+
+        ns =
+            a2 s.x s.y v
+    in
+    State (H.tf ns) (H.ts ns)
+
+
+a i1 i2 =
+    case i1 + i2 of
+        3 ->
+            2
+
+        (-1) ->
+            0
+
+        x ->
+            x
+
+
+a2 x1 y1 ( y2, x2 ) =
+    case x1 + x2 of
+        (-1) ->
+            ( x1, y1 )
+
+        _ ->
+            case y1 + y2 of
+                (-1) ->
+                    ( x1, y1 )
+
+                _ ->
+                    case at2 ( x2 + x1, y1 + y2 ) |> Debug.log (toString [ x1, y1, x2, y2 ]) of
+                        Just _ ->
+                            ( x2 + x1, y1 + y2 )
+
+                        _ ->
+                            ( x1, y1 )
+
+
+pM char =
+    case char of
+        'U' ->
+            U
+
+        'R' ->
+            R
+
+        'L' ->
+            L
+
+        _ ->
+            D
+
+
+pI =
+    input |> String.lines |> List.map (String.toList >> List.map pM) |> Debug.log "lol"
+
+
+r1 =
+    pI |> List.foldl (\moves ( s, r ) -> moves |> H.fldl makeMove s |> (\sn -> ( sn, (keypad |> H.at sn.y |> H.at sn.x) :: r ))) ( State 1 1, [] )
+
+
+r2 =
+    pI |> List.foldl (\moves ( s, r ) -> moves |> H.fldl makeMove2 s |> (\sn -> ( sn, at2 ( sn.x, sn.y ) :: r ) |> Debug.log "ruch")) ( State 0 2, [] )
+
+
+input =
+    """DLRRRRLRLDRRRURRURULRLLULUURRRDDLDULDULLUUDLURLURLLDLUUUDUUUULDRDUUDUDDRRLRDDDUDLDLLRUURDRULUULRLRDULULLRLRLRLDRLUULDLDDDDRRLRUUUDDRURRULLLRURLUURULLRLUDDLDRUULDRURULRRRLLLRDLULDRRDDUDLURURLDULDRDRLDDUURRDUDDRDUURDULDUURDUDRDRULDUDUULRRULUUURDUURUDLDURDLRLURUUDRRDLRUDRULRURLDLLDLLRRDRDRLRRRULDRRLDUURLUUDLUUDDLLRULRDUUDURURLUURDRRRUDLRDULRRRLDRDULRUUDDDLRDUULDRLLDRULUULULRDRUUUULULLRLLLRUURUULRRLDDDRULRRRUDURUR
+RULRUUUDLLUDURDRDDLLRLLUDRUDDRLRRDLDLDRDULDLULURDLUDDDUULURLDRUUURURLLRRDDDUUDRLRLLDLDRDDDRDUDLRDRDLLLDDLDUDDRUDUUDLLLLLDULRLURRRLLURUUULUDRLRLRLURRDRLLLRLLULRLLLDDLRLRDLUUUUUDULULDDULLUDUURDLRUDLRUDLRLLRLDLULRLDUDRURURDLRULDLULULDLLDLDLDLLLUDUDDLRLRRDULLUDRDDLLLDUURDULUDURLLLDRUDDDLRLULDLDRRDDDRDULDDUDRDDULLULRRLRUULRDUDURUDULUDUDURLDRDUUDDRRLRURDRRLRDDDDRUDLUDLDDLRDLUUDLRRURDDLURDLRDLLRDRDLDLDUUUURULUULDDDDLDULUURRRULUDLLLDRULDRURL
+RRRLRDLLDUURDRRRLURDUULUDURDRRUUDURURRLDLLDRDLRRURDDUDDURLRUUDDULULRUUDRLUUDDLLDDDLRRRDLLLLLLRRURDULDLURRURRDDLDDDUDURRDURRRLUDRRULLRULDRLULRULDDRLLRDLRDUURULURLUURLRRULDULULUULDUDLRLDRDDRRRUUULULDUURLRLLURRLURDUUDDDRUULDLLLDRUURLRRLLDDUDRDLDDDULDRDDDUDRRLLLULURDUDLLUUURRLDULURURDDLUDLLRLDRULULURDLDRLURDLRRDRRUULLULDLURRDDUDRDDDLDUDLDRRUDRULDLDULRLLRRRRDDRLUURRRRDDLLRUURRLRURULDDULRLULRURRUULDUUDURDRRLRLUDRULDRUULUUDRDURDURRLULDDDULDDLRDURRUUUUUDDRRDLRDULUUDDL
+DRRLLRRLULDDULRDDLRLDRURDDUDULURRDLUUULURRRLLRLULURLLRLLDLLUDDLLRDRURRDLDDURRURDRDDUDDDLLRLDLDLDDDDRRRRUDUDLRDUDDURLLRURRDUDLRLLUDDRLDUUDDLLLUDRRRLLDDULUDDRLLUDDULLDDLRLDLRURRLUDDLULULDLUURDLLUDUDRRRRDULUDLRRLRUDDUUDRRLLRUUDRRLDDLRRRUDRRDRRDDUDLULLURRUURLLLDRDDLUDDDUDDRURURDLRUULLRDRUUDRDUDRLULLDURUUULDDLDRDRUDRUDUULDDRLRDRRDRRRRLRLRUULDDUUDDLLLLRRRDUDLRDLDUDDUURLUDURLDRRRDRUDUDRLDLRLDRDDLUDRURLRDRDLDUDDDLRLULLUULURLDDDULDUDDDLDRLDLURULLUDLLDRULDLLLDUL
+LDULURUULLUDLDDRLLDURRULRLURLLURLRRLRDLDDRUURULLRUURUURRUDDDLRRLDDLULDURLLRDURDLLLURLDRULLURLRLDRDRULURDULDLLDUULLLDUDULDURLUDRULRUUUUUUDUUDDDLLURDLDLRLRDLULRDRULUUDRLULLURLRLDURDRRDUDDDURLLUUDRRURUDLDUDRLRLDRLLLLDLLLURRUDDURLDDRULLRRRRDUULDLUDLDRDUUURLDLLLDLRLRRLDDULLRURRRULDLURLURRRRULUURLLUULRURDURURLRRDULLDULLUDURDUDRLUULULDRRDLLDRDRRULLLDDDRDUDLRDLRDDURRLDUDLLRUDRRRUDRURURRRRDRDDRULRRLLDDRRRLDLULRLRRRUDUDULRDLUDRULRRRRLUULRULRLLRLLURDLUURDULRLDLRLURDUURUULUUDRLLUDRULULULLLLRLDLLLDDDLUULUDLLLDDULRDRULURDLLRRDRLUDRD"""
+
+
+input2 =
+    """ULL
+RRDDD
+LURDL
+UUUUD"""

@@ -1,12 +1,17 @@
 module E1 exposing (..)
 
-import Html
 import Dict
+import Html
+
+
 -- import List.extra
 
-main = Html.text (toString t2)
 
-input = 
+main =
+    Html.text (toString t2)
+
+
+input =
     """-6
 -7
 +2
@@ -1008,29 +1013,40 @@ input =
 -2
 -137857"""
 
-t1 = input |> String.lines |> List.filterMap (String.toInt >> Result.toMaybe) |> List.sum 
 
-t0 = input |> String.lines |> List.filterMap (String.toInt >> Result.toMaybe)
+t1 =
+    input |> String.lines |> List.filterMap (String.toInt >> Result.toMaybe) |> List.sum
 
-t2xx dict sum = 
-    case (t0 |> List.foldl (\x (sum, dict, res) ->
-        case res of 
-            Just _ -> 
-                (sum, dict, res) 
-            
-            Nothing -> 
-                case Dict.get (x + sum) dict of 
-                    Just _ -> 
-                        (x + sum, dict, Just (x + sum))
-                    
-                    Nothing -> 
-                        (x + sum, dict |> Dict.insert (x + sum) (), Nothing)
-    ) (sum, dict, Nothing) ) of 
-        (sum1, dict1, Nothing) -> 
+
+t0 =
+    input |> String.lines |> List.filterMap (String.toInt >> Result.toMaybe)
+
+
+t2xx dict sum =
+    case
+        t0
+            |> List.foldl
+                (\x ( sum, dict, res ) ->
+                    case res of
+                        Just _ ->
+                            ( sum, dict, res )
+
+                        Nothing ->
+                            case Dict.get (x + sum) dict of
+                                Just _ ->
+                                    ( x + sum, dict, Just (x + sum) )
+
+                                Nothing ->
+                                    ( x + sum, dict |> Dict.insert (x + sum) (), Nothing )
+                )
+                ( sum, dict, Nothing )
+    of
+        ( sum1, dict1, Nothing ) ->
             t2xx dict1 sum1
-        
-        (_, _, Just a) -> 
-            a 
+
+        ( _, _, Just a ) ->
+            a
 
 
-t2 = t2xx (Dict.empty |> Dict.insert 0 ()) 0
+t2 =
+    t2xx (Dict.empty |> Dict.insert 0 ()) 0
