@@ -106,3 +106,16 @@ updD k a f =
 pInt : Parser.Parser Int
 pInt =
     Parser.keep Parser.oneOrMore Char.isDigit |> Parser.andThen (toI >> Parser.succeed)
+
+
+iFF : Bool -> a -> a -> a
+iFF b x y =
+    if b then
+        x
+    else
+        y
+
+
+log : a -> a
+log =
+    Debug.log "XD"

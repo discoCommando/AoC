@@ -1,4 +1,4 @@
-module E8 exposing (..)
+module E9 exposing (..)
 
 import Char
 import Dict
@@ -14,39 +14,57 @@ main =
 
 
 type A
-    = S String
-    | A Int Int
+    = A Int Int String
 
 
 pI : Parser.Parser A
 pI =
-    Parser.oneOf
-        [ succeed A
-            |. symbol "("
-            |= H.pInt
-            |. symbol "x"
-            |= H.pInt
-            |. symbol ")"
-        , succeed S
-            |= keep Parser.oneOrMore Char.isUpper
-        ]
+    succeed A
+        |. symbol "("
+        |= H.pInt
+        |. symbol "x"
+        |= H.pInt
+        |. symbol ")"
+        |> Parser.andThen
+            (\f ->
+                case f "" of
+                    A l _ _ ->
+                        Parser.keep (Parser.Exactly l) (always True)
+                            |> Parser.andThen (f >> succeed)
+            )
 
 
 pIs =
     pI |> Parser.repeat Parser.oneOrMore
 
 
-l a =
-    case a of
-        S s ->
-            String.length s
+l (A l t s) =
+    (min l <| String.length s) * t
 
-        A i1 i2 ->
-            i1 * i2
+
+generate (A l t s) =
+    List.repeat t s |> String.join ""
 
 
 res1 =
-    input |> Parser.run pIs |> H.uR |> List.map l |> List.sum
+    input |> Parser.run pIs |> Debug.log "asd" |> H.uR |> Debug.log "sa" |> List.map l |> List.sum
+
+
+generateAll inp =
+    case Parser.run pIs inp of
+        Err x ->
+            inp
+
+        Ok newI ->
+            newI |> List.map generate |> String.join "" |> generateAll
+
+
+res2 =
+    input |> generateAll |> Debug.log "XD"
+
+
+inputt =
+    "(143x8)(22x7)(4x15)XOPG(7x9)JDPAKGM(8x8)ALGCJRZQ(38x1)(4x10)VNSW"
 
 
 input =
