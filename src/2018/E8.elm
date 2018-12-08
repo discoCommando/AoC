@@ -44,18 +44,22 @@ intAndSpaces =
 
 treeParser : Parser Tree
 treeParser =
-    succeed Node
-        |= headerParser
+    headerParser
         |> andThen
-            (\f ->
-                case f [] [] of
-                    Node (Header childCount metadata) _ _ ->
-                        Parser.repeat (Parser.Exactly childCount) treeParser
-                            |> andThen
-                                (\children ->
-                                    Parser.repeat (Parser.Exactly metadata) intAndSpaces
-                                        |> andThen (\metadatas -> f children metadatas |> succeed)
-                                )
+            (\(Header childCount metadata) ->
+                Parser.repeat (Parser.Exactly childCount) treeParser
+                    |> andThen
+                        (\children ->
+                            Parser.repeat (Parser.Exactly metadata) intAndSpaces
+                                |> andThen
+                                    (\metadatas ->
+                                        Node
+                                            (Header childCount metadata)
+                                            children
+                                            metadatas
+                                            |> succeed
+                                    )
+                        )
             )
 
 
@@ -65,7 +69,7 @@ sumMetadatas (Node _ children metadatas) =
 
 
 r1 =
-    input |> Parser.run treeParser |> Debug.log "tree" |> H.uR |> sumMetadatas |> Debug.log "Part1 answer"
+    input |> Parser.run treeParser2 |> Debug.log "tree" |> H.uR |> sumMetadatas |> Debug.log "Part1 answer"
 
 
 valueOfTree : Tree -> Int
@@ -89,7 +93,7 @@ valueOfTree (Node header children metadatas) =
 
 
 r2 =
-    input |> Parser.run treeParser |> Debug.log "tree" |> H.uR |> valueOfTree |> Debug.log "Part2 answer"
+    input |> Parser.run treeParser2 |> Debug.log "tree" |> H.uR |> valueOfTree |> Debug.log "Part2 answer"
 
 
 inpute =
