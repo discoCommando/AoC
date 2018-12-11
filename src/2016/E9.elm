@@ -10,61 +10,144 @@ import String
 
 
 main =
-    H.makeMain [ res1 |> toString ]
+    H.makeMain []
 
 
-type A
-    = A Int Int String
+type Part
+    = WithMarker Int Int String
+    | WithoutMarker String
 
 
-pI : Parser.Parser A
+pI : Parser.Parser Part
 pI =
-    succeed A
-        |. symbol "("
-        |= H.pInt
-        |. symbol "x"
-        |= H.pInt
-        |. symbol ")"
-        |> Parser.andThen
-            (\f ->
-                case f "" of
-                    A l _ _ ->
-                        Parser.keep (Parser.Exactly l) (always True)
-                            |> Parser.andThen (f >> succeed)
-            )
+    Parser.oneOf
+        [ succeed identity
+            |. symbol "("
+            |= H.pInt
+            |> Parser.andThen
+                (\length ->
+                    succeed (WithMarker length)
+                        |. symbol "x"
+                        |= H.pInt
+                        |. symbol ")"
+                        |= keep (Parser.Exactly length) (always True)
+                 -- |= (H.parseAtMost length (keep (Parser.Exactly 1) (always True) |> Parser.  map (String.toList >> H.at 0)) |> Parser.map (String.fromList))
+                )
+        , succeed WithoutMarker
+            |= keep Parser.oneOrMore Char.isUpper
+        ]
 
 
 pIs =
-    pI |> Parser.repeat Parser.oneOrMore
+    pI |> Parser.repeat Parser.zeroOrMore
 
 
-l (A l t s) =
-    (min l <| String.length s) * t
+length1 part =
+    case part of
+        WithMarker len times s ->
+            len * times
+
+        WithoutMarker s ->
+            String.length s
 
 
-generate (A l t s) =
-    List.repeat t s |> String.join ""
+generate part =
+    case part of
+        WithoutMarker s ->
+            s
+
+        WithMarker len times s ->
+            List.repeat times s |> String.join ""
 
 
-res1 =
-    input |> Parser.run pIs |> Debug.log "asd" |> H.uR |> Debug.log "sa" |> List.map l |> List.sum
+
+-- res1 =
+--     input |> Parser.run pIs |> Debug.log "asd" |> H.uR |> Debug.log "sa" |> List.map length1 |> List.sum
+-- res11 =
+--     input |> Parser.run pIs |> Debug.log "asd" |> H.uR |> List.map generate |> String.join "" |> Debug.log "result" |> String.length |> Debug.log "len"
 
 
-generateAll inp =
-    case Parser.run pIs inp of
-        Err x ->
-            inp
+pIBackwards : Parser.Parser Part2
+pIBackwards =
+    Parser.oneOf
+        [ succeed Marker
+            |. symbol ")"
+            |= H.pInt
+            |. symbol "x"
+            |= H.pInt
+            |. symbol "("
+        , succeed S
+            |= keep Parser.oneOrMore Char.isUpper
+        ]
 
-        Ok newI ->
-            newI |> List.map generate |> String.join "" |> generateAll
+
+type Part2
+    = S String
+    | Marker Int Int -- length times
+
+
+
+-- generateFold commands sum =
+--     case commands of
+--         [] ->
+--             sum
+--         (command :: rest) ->
+--             case command of
+--                 WithoutMarker s ->
+--                     generateFold rest (String.length s + sum)
+--                 WithMarker len times s ->
+--                     times * generateFold (rest sum
+
+
+lengthFull : Part -> Int
+lengthFull part =
+    case part of
+        WithoutMarker s ->
+            String.length s
+
+        WithMarker len times s ->
+            let
+                _ =
+                    case String.length s < len of
+                        True ->
+                            Debug.log "is" ()
+
+                        False ->
+                            ()
+
+                newSum =
+                    Parser.run pIs s
+                        |> Debug.log "pp2"
+                        |> H.uR
+                        |> List.map lengthFull
+                        |> List.sum
+            in
+            times * newSum
+
+
+foldFromTheBack : Part2 -> Int -> Int
+foldFromTheBack part2 sum =
+    case part2 of
+        S string ->
+            sum + String.length string
+
+        Marker times length ->
+            if sum > length then
+                sum * times
+            else
+                (length - sum) * times
 
 
 res2 =
-    input |> generateAll |> Debug.log "XD"
+    inputt |> String.toList |> List.reverse |> String.fromList |> Parser.run (Parser.repeat Parser.oneOrMore pIBackwards) |> H.uR |> Debug.log "parsed" |> List.foldl foldFromTheBack 0 |> Debug.log "result"
+
+
+res23 =
+    input |> Parser.run pIs |> Debug.log "pp" |> H.uR |> Debug.log "parsed" |> List.map lengthFull |> List.sum |> Debug.log "result"
 
 
 inputt =
-    "(143x8)(22x7)(4x15)XOPG(7x9)JDPAKGM(8x8)ALGCJRZQ(38x1)(4x10)VNSW"
+    "(25x3)(3x3)ABC(2x3)XY(5x2)PQRSTX(18x9)(3x2)TWO(5x7)SEVEN"
 
 
 input =

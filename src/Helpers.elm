@@ -3,7 +3,7 @@ module Helpers exposing (..)
 import Char
 import Dict
 import Html
-import Parser
+import Parser exposing ((|.), (|=))
 import String
 
 
@@ -105,7 +105,27 @@ updD k a f =
 
 pInt : Parser.Parser Int
 pInt =
-    Parser.keep Parser.oneOrMore Char.isDigit |> Parser.andThen (toI >> Parser.succeed)
+    Parser.oneOf
+        [ Parser.succeed identity
+            |. Parser.keyword "-"
+            |= (Parser.keep Parser.oneOrMore Char.isDigit |> Parser.andThen (toI >> (*) -1 >> Parser.succeed))
+        , Parser.keep Parser.oneOrMore Char.isDigit |> Parser.andThen (toI >> Parser.succeed)
+        ]
+
+
+parseAtMost : Int -> Parser.Parser a -> Parser.Parser (List a)
+parseAtMost len parser =
+    case len of
+        0 ->
+            Parser.succeed []
+
+        _ ->
+            Parser.oneOf
+                [ Parser.succeed (::)
+                    |= parser
+                    |= parseAtMost (len - 1) parser
+                , Parser.succeed []
+                ]
 
 
 iFF : Bool -> a -> a -> a
@@ -119,3 +139,8 @@ iFF b x y =
 log : a -> a
 log =
     Debug.log "XD"
+
+
+spaces : Parser.Parser String
+spaces =
+    Parser.keep Parser.zeroOrMore ((==) ' ')

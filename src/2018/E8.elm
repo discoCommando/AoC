@@ -47,7 +47,7 @@ treeParser =
     headerParser
         |> andThen
             (\(Header childCount metadata) ->
-                succeed (Node (Header childCount metadata)) 
+                succeed (Node (Header childCount metadata))
                     |= Parser.repeat (Parser.Exactly childCount) treeParser
                     |= Parser.repeat (Parser.Exactly metadata) intAndSpaces
             )
