@@ -144,3 +144,17 @@ log =
 spaces : Parser.Parser String
 spaces =
     Parser.keep Parser.zeroOrMore ((==) ' ')
+
+
+foldState : (a -> b -> ( b, c )) -> b -> List a -> ( b, List c )
+foldState f b la =
+    la
+        |> List.foldl
+            (\a ( b, lc ) ->
+                let
+                    ( newB, c ) =
+                        f a b
+                in
+                ( newB, c :: lc )
+            )
+            ( b, [] )

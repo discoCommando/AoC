@@ -49,8 +49,8 @@ calculation x y =
     x * x + 3 * x + 2 * x * y + y + y * y
 
 
-tile : Int -> Int -> Tile
-tile x y =
+tile : ( Int, Int ) -> Tile
+tile ( x, y ) =
     if (calculation x y |> (+) designerFavouriteNumber |> ones) % 2 == 0 then
         OpenSpace
     else
@@ -59,3 +59,68 @@ tile x y =
 
 pointToReach =
     ( 31, 39 )
+
+
+startingPoint =
+    ( 1, 1 )
+
+
+possiblePoints : ( Int, Int ) -> List ( Int, Int )
+possiblePoints ( x, y ) =
+    [ ( x + 1, y )
+    , ( abs <| x - 1, y )
+    , ( x, y + 1 )
+    , ( x, abs <| y - 1 )
+    ]
+        |> List.Extra.unique
+        |> List.filter (tile >> (==) OpenSpace)
+
+
+type alias State =
+    Dict ( Int, Int ) Int
+
+
+shortestPathTo : ( Int, Int ) -> State -> ( State, Int )
+shortestPathTo ( x, y ) state =
+    possiblePoints ( x, y )
+        |> H.foldState shortestPathTo state
+        |> (\( newState, values ) ->
+                let
+                    minimum =
+                        List.foldl min 100000 values
+                in
+                ( newState |> Dict.insert ( x, y ) (minimum + 1), minimum + 1 )
+           )
+
+
+decorate : List ( ( Int, Int ), Int ) -> State -> State
+decorate points state =
+    case points of
+        [] ->
+            state
+
+        ( point, length ) :: rest ->
+            case state |> Dict.get point of
+                Nothing ->
+                    if point == pointToReach then
+                        state |> Dict.insert point length
+                    else
+                        decorate (rest ++ (point |> possiblePoints |> List.map (\p -> ( p, length + 1 )))) (state |> Dict.insert point length)
+
+                Just _ ->
+                    decorate rest state
+
+
+try1 =
+    decorate [ ( startingPoint, 0 ) ] Dict.empty
+        |> Debug.log "state"
+        |> Dict.get pointToReach
+        |> H.uM
+        |> Debug.log "answer"
+
+
+try2 =
+    decorate [ ( startingPoint, 0 ) ] Dict.empty
+        |> Dict.filter (\_ len -> len <= 50)
+        |> Dict.size
+        |> Debug.log "answer2"
