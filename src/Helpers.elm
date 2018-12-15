@@ -1,5 +1,6 @@
 module Helpers exposing (..)
 
+import Array
 import Char
 import Dict
 import Html
@@ -40,6 +41,11 @@ uR r =
 
         _ ->
             Debug.crash "unsafeResult"
+
+
+uG : Int -> Array.Array a -> a
+uG i a =
+    uM (Array.get i a)
 
 
 tf : ( a, x ) -> a

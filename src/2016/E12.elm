@@ -1,4 +1,4 @@
-module E10 exposing (..)
+module E12 exposing (..)
 
 import Char
 import Dict exposing (Dict)
