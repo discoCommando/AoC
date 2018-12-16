@@ -215,7 +215,6 @@ move hit point state =
                             case closest of
                                 [] ->
                                     state
-                                        |> attack hit point
 
                                 ( _, _, pathReversed ) :: _ ->
                                     let
