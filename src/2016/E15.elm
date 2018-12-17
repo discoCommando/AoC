@@ -15,8 +15,9 @@ import String
 
 
 type alias DiscState =
-    { size : Int
-    , position : Int
+    { number : Int
+    , size : Int
+    , initialPosition : Int
     }
 
 
@@ -27,9 +28,8 @@ type BallPosition
 
 
 type alias State =
-    { discs : Array DiscState
-    , time : Int
-    , ballPosition : BallPosition
+    { discs : List DiscState
+    , turn : Int
     }
 
 
@@ -37,7 +37,7 @@ lineParser : Parser DiscState
 lineParser =
     succeed DiscState
         |. keyword "Disc #"
-        |. H.pInt
+        |= H.pInt
         |. keyword " has "
         |= H.pInt
         |. keyword " positions; at time=0, it is at position "
@@ -50,18 +50,16 @@ parseInput waiting input =
         input
             |> String.lines
             |> List.map (Parser.run lineParser >> H.uR)
-            |> Array.fromList
-    , time = 0
-    , ballPosition = Waiting waiting
+            |> List.sortBy .size
+            |> List.reverse
+    , turn = 0
     }
 
 
-moveAllDiscs : Array DiscState -> Array DiscState
-moveAllDiscs discs =
-    discs |> Array.map (\discState -> { discState | position = (discState.position + 1) % (discState.size - 1) })
 
-
-
+-- moveAllDiscs : Array DiscState -> Array DiscState
+-- moveAllDiscs discs =
+--     discs |> Array.map (\discState -> { discState | position = (discState.position + 1) % (discState.size - 1) })
 -- step : State -> State
 -- step state =
 --     let
@@ -91,41 +89,52 @@ moveAllDiscs discs =
 --
 
 
-checkDiscs : Int -> Array DiscState -> Bool
-checkDiscs i discs =
-    case Array.get i discs of
-        Nothing ->
+getZero : Int -> DiscState -> Int
+getZero turn discState =
+    ((discState.initialPosition + discState.number) % discState.size) + discState.size * turn
+
+
+checkDiscAt : Int -> DiscState -> Bool
+checkDiscAt time discState =
+    ((discState.initialPosition + discState.number + time) % discState.size) == 0
+
+
+checkDiscsAt : Int -> List DiscState -> Bool
+checkDiscsAt time discs =
+    case discs of
+        [] ->
             True
 
-        Just state ->
-            case (state.position + i) % Array.length discs of
-                0 ->
-                    checkDiscs (i + 1) discs
-
-                _ ->
-                    False
+        discState :: rest ->
+            if checkDiscAt time discState then
+                checkDiscsAt time rest
+            else
+                False
 
 
-findTime : Int -> Array DiscState -> Int
-findTime i discs =
+findTime : State -> State
+findTime state =
     let
-        movedDiscs =
-            moveAllDiscs discs
+        _ =
+            if state.turn % 100000 == 0 then
+                Debug.log (toString state.turn) ()
+            else
+                ()
     in
-    case checkDiscs 0 movedDiscs of
-        True ->
-            let
-                _ =
-                    Debug.log "finishing discs" movedDiscs
-            in
-            i
-
-        False ->
-            findTime (i + 1) movedDiscs
+    if checkDiscsAt (state.discs |> H.at 0 |> getZero state.turn) state.discs then
+        state
+    else
+        findTime { state | turn = state.turn + 1 }
 
 
 test1 =
-    inpute |> parseInput 0 |> .discs |> Debug.log "discs" |> findTime 1 |> Debug.log "time"
+    input
+        |> parseInput 0
+        |> Debug.log "discs"
+        |> findTime
+        |> Debug.log "finalState"
+        |> (\state -> getZero state.turn (H.at 0 state.discs))
+        |> Debug.log "finalTime"
 
 
 input =
@@ -135,6 +144,11 @@ Disc #3 has 19 positions; at time=0, it is at position 17.
 Disc #4 has 7 positions; at time=0, it is at position 1.
 Disc #5 has 5 positions; at time=0, it is at position 0.
 Disc #6 has 3 positions; at time=0, it is at position 1."""
+
+
+
+-- x + 10 + 1 % 13 -> x = 13t - 11
+-- x + 15 + 2 % 17 -> x = 17s
 
 
 inpute =
@@ -197,3 +211,8 @@ Disc #2 has 2 positions; at time=0, it is at position 1."""
 --
 -- x === 4 (mod 5)
 -- x === 1 (mod 2) -> (5t + 4) === 1 -> 5t === -3 -> 5t === 1 (mod 2) -> t == -3 -> t === 1
+--
+-- x + 5 % 5 -> x % 5 -> x = 5t
+-- x + 3 % 2 -> x + 1 % 2 -> 5t + 1 % 2 -> t - 3 % 2 -> t + 1 % 2 -> t = 2s - 1
+-- x = 10s - 5
+--
