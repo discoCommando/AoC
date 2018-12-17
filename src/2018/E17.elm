@@ -15,28 +15,10 @@ import Set exposing (Set)
 import String
 
 
-type WaterState
-    = Falling
-    | Still
-
-
-type Tile
-    = Clay
-    | Water WaterState
-
-
-type alias Tiles =
-    Dict Int (Set Int)
-
-
-
--- only tile type
-
-
 type alias State =
     { tiles : Dict Int (Set Int)
-    , falling : List ( Int, Int ) -- queue
-    , fallen : Dict Int (Set Int) -- not necessarily still
+    , falling : List ( Int, Int ) -- stack - dfs
+    , fallen : Dict Int (Set Int) -- still water
     , miny : Int
     , maxy : Int
     , done : Set ( Int, Int )
