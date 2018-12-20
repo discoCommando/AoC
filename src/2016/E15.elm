@@ -21,18 +21,6 @@ type alias DiscState =
     }
 
 
-type BallPosition
-    = Waiting Int
-    | InDisc Int
-    | Finished
-
-
-type alias State =
-    { discs : List DiscState
-    , turn : Int
-    }
-
-
 lineParser : Parser DiscState
 lineParser =
     succeed DiscState
@@ -44,54 +32,29 @@ lineParser =
         |= H.pInt
 
 
-parseInput : Int -> String -> State
-parseInput waiting input =
+parseInput : String -> State
+parseInput input =
     { discs =
         input
             |> String.lines
             |> List.map (Parser.run lineParser >> H.uR)
             |> List.sortBy .size
             |> List.reverse
-    , turn = 0
+    , taker = initialTaker
     }
 
 
-
--- moveAllDiscs : Array DiscState -> Array DiscState
--- moveAllDiscs discs =
---     discs |> Array.map (\discState -> { discState | position = (discState.position + 1) % (discState.size - 1) })
--- step : State -> State
--- step state =
---     let
---         newDiscs = state.discs |> moveAllDiscs
---         newBallPosition =
---             case state.ballPosition of
---                 Waiting _ ->
---                     case H.uG state.discs 0 |> .position of
---                         0 ->
---                             { stateWithNewTime | ballPosition = InDisc 0 }
---
---                         _ ->
---                             stateWithNewTime
---
---                 InDisc position ->
---                     case H.uG state.discs position |> .position of
---                         0 ->
---                             if position == Array.length state.discs then
---                                 Finished
---                             else
---
---
---                 Finished ->
---                     state
---     in
---     { state | }
---
-
-
-getZero : Int -> DiscState -> Int
-getZero turn discState =
-    ((discState.initialPosition + discState.number) % discState.size) + discState.size * turn
+parseInput2 : String -> State
+parseInput2 input =
+    { discs =
+        input
+            |> String.lines
+            |> List.map (Parser.run lineParser >> H.uR)
+            |> (\results -> results ++ [ { number = List.length results + 1, size = 11, initialPosition = 0 } ])
+            |> List.sortBy .size
+            |> List.reverse
+    , taker = initialTaker
+    }
 
 
 checkDiscAt : Int -> DiscState -> Bool
@@ -112,29 +75,64 @@ checkDiscsAt time discs =
                 False
 
 
+type alias Taker =
+    { size : Int
+    , offset : Int
+    }
+
+
+initialTaker : Taker
+initialTaker =
+    { size = 1, offset = 0 }
+
+
+findOffset : Int -> Taker -> DiscState -> Int
+findOffset turn taker discState =
+    if (((turn * taker.size + taker.offset) + discState.number + discState.initialPosition) % discState.size) == 0 then
+        (turn * taker.size + taker.offset) % (taker.size * discState.size)
+    else
+        findOffset (turn + 1) taker discState
+
+
+foldTaker : DiscState -> Taker -> Taker
+foldTaker discState taker =
+    { size = taker.size * discState.size, offset = findOffset 0 taker discState }
+
+
+type alias State =
+    { discs : List DiscState
+    , taker : Taker
+    }
+
+
 findTime : State -> State
 findTime state =
     let
-        _ =
-            if state.turn % 100000 == 0 then
-                Debug.log (toString state.turn) ()
-            else
-                ()
+        newTaker =
+            state.discs |> List.foldl foldTaker state.taker
     in
-    if checkDiscsAt (state.discs |> H.at 0 |> getZero state.turn) state.discs then
-        state
-    else
-        findTime { state | turn = state.turn + 1 }
+    { state | taker = newTaker }
 
 
 test1 =
     input
-        |> parseInput 0
+        |> parseInput
         |> Debug.log "discs"
         |> findTime
-        |> Debug.log "finalState"
-        |> (\state -> getZero state.turn (H.at 0 state.discs))
-        |> Debug.log "finalTime"
+        |> Debug.log "finalState1"
+
+
+test2 =
+    input
+        |> parseInput2
+        |> Debug.log "discs"
+        |> findTime
+        |> Debug.log "finalState2"
+
+
+
+-- |> (\state -> getZero state.turn (H.at 0 state.discs))
+-- |> Debug.log "finalTime"
 
 
 input =
@@ -157,6 +155,18 @@ Disc #2 has 2 positions; at time=0, it is at position 1."""
 
 
 
+-- .........
+-- --.----.----.----.----.----.----.----.----.----.----
+-- -.--.--.--.--.--.--.--.--.--.--.--.--.--.--.--.--.--.--
+-- x + 2 % 3 ->
+-- x + 3 % 5 -> time +
+-- 7 + 15 * i
+--
+-- x + 3 % 5 -> x = 5t + 2
+-- x + 2 % 3 -> 5t + 1 % 3 -> 5t = (15s + 2) % 3
+--
+-- x === 3 % 5
+-- x === 1 % 3 -> 5t + 2 === 1 % 3 -> 5t === 2 % 3
 -- ball d1 d2
 -- 0    4  1
 -- 1    0  0
