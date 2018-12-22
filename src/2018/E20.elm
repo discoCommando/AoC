@@ -227,7 +227,7 @@ getAnswer2 state =
 
 
 test2 =
-    input
+    inputtest
         |> Parser.run parseInput
         |> H.uR
         |> splitRoute
@@ -239,7 +239,7 @@ test2 =
 
 inputtest : String
 inputtest =
-    "^N(NESW|)NS$"
+    "^N(NNSS|)NNN$"
 
 
 inputtest2 =
