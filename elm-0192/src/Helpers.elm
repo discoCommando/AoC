@@ -22,6 +22,7 @@ replaceAt : Int -> (x -> x) -> List x -> List x
 replaceAt i f l =
     List.take i l ++ [ at i l |> f ] ++ List.drop (i + 1) l
 
+
 uM : Maybe a -> a
 uM m =
     case m of
@@ -45,6 +46,16 @@ uR r =
 uG : Int -> Array.Array a -> a
 uG i a =
     uM (Array.get i a)
+
+
+unsafeReplaceAt : Int -> (a -> a) -> Array.Array a -> Array.Array a
+unsafeReplaceAt index f arr =
+    let
+        v =
+            uG index arr
+    in
+    Array.set index (f v) arr
+
 
 
 tf : ( a, x ) -> a
@@ -79,7 +90,7 @@ makeMain =
 
 toI : String -> Int
 toI =
-    String.toInt  >> uM
+    String.toInt >> uM
 
 
 countApp : comparable -> Dict.Dict comparable Int -> Dict.Dict comparable Int
@@ -123,7 +134,6 @@ parseAtMost len parser =
                 ]
 
 
-
 log : a -> a
 log =
     Debug.log "XD"
@@ -141,3 +151,12 @@ foldState f b_ la =
                 ( newB, c :: lc )
             )
             ( b_, [] )
+
+
+logIf : String -> x -> Bool -> ()
+logIf m v b =
+    if b then
+        Debug.log m v |> (\_ -> ())
+
+    else
+        ()
