@@ -9,9 +9,9 @@ import Set exposing (Set)
 
 
 main =
-    Helpers.makeMain
-        [ Debug.toString result1
-        , Debug.toString result2
+    Helpers.makeAppWithMeasurements
+        [ Helpers.Computation "part one" (\_ -> Debug.toString result1)
+        , Helpers.Computation "part two" (\_ -> Debug.toString result2)
         ]
 
 
