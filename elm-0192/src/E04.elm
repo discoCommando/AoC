@@ -10,16 +10,16 @@ import Set exposing (Set)
 
 main =
     Helpers.makeAppWithMeasurements
-        [ Helpers.Computation "part one" (\_ -> Debug.toString result1)
-        , Helpers.Computation "part two" (\_ -> Debug.toString result2)
+        [ Helpers.Computation "part one" (\() -> Debug.toString <| result1 ())
+        , Helpers.Computation "part two" (\() -> Debug.toString <| result2 ())
         ]
 
 
-result1 =
+result1 _ =
     generate correctPartOne |> List.length
 
 
-result2 =
+result2 _ =
     generate correctPartTwo |> List.length
 
 
@@ -120,9 +120,11 @@ generate predicate =
 
 lowerBoundary : Int
 lowerBoundary =
-    172930
+    --    172930
+    0
 
 
 upperBoundary : Int
 upperBoundary =
-    683082
+    --    683082
+    999999999999999

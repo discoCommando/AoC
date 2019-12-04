@@ -2,6 +2,7 @@ module Helpers exposing (..)
 
 import Array
 import Browser
+import Browser.Events
 import Char
 import Dict
 import Html
@@ -199,12 +200,13 @@ type alias Model =
     { inQueue : List Computation
     , loading : ComputationState
     , loaded : List Measurement
+    , waitForTick : Bool
     }
 
 
 init : List Computation -> ( Model, Cmd Msg )
 init computations =
-    ( Model computations NoneRunning [], Task.perform (\_ -> Tick) (Process.sleep 0) )
+    ( Model computations NoneRunning [] True, Cmd.none )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -213,14 +215,19 @@ update msg model =
         Tick ->
             case model.loading of
                 NoneRunning ->
-                    ( model, Task.perform Time Time.now )
+                    ( Model model.inQueue model.loading model.loaded False, Task.perform Time Time.now )
 
                 Started startPosix computation ->
                     let
                         computationResult =
                             ComputationResult computation.name (computation.compute ())
                     in
-                    ( Model model.inQueue (Finished startPosix computationResult) model.loaded, Task.perform Time Time.now )
+                    ( Model model.inQueue
+                        (Finished startPosix computationResult)
+                        model.loaded
+                        False
+                    , Task.perform Time Time.now
+                    )
 
                 _ ->
                     Debug.todo "shouldn't happen"
@@ -233,7 +240,7 @@ update msg model =
                             ( model, Cmd.none )
 
                         computation :: rest ->
-                            ( Model rest (Started posix computation) model.loaded, Task.perform (\_ -> Tick) <| Process.sleep 0 )
+                            ( Model rest (Started posix computation) model.loaded True, Cmd.none )
 
                 Started startPosix computation ->
                     Debug.todo "shouldn't happen 3"
@@ -243,13 +250,21 @@ update msg model =
                         time =
                             Time.posixToMillis posix - Time.posixToMillis startPosix
                     in
-                    ( Model model.inQueue NoneRunning (model.loaded ++ [ Measurement computationResult.name computationResult.value time ])
-                    , Task.perform (\_ -> Tick) <| Process.sleep 0
+                    ( Model
+                        model.inQueue
+                        NoneRunning
+                        (model.loaded ++ [ Measurement computationResult.name computationResult.value time ])
+                        True
+                    , Cmd.none
                     )
 
 
 view : Model -> Html.Html msg
 view model =
+    let
+        _ =
+            Debug.log "view" model
+    in
     Html.div [] <|
         List.concat
             [ model.loaded
@@ -305,7 +320,23 @@ view model =
                             |> List.singleton
                             |> Html.p []
                     )
+            , List.singleton <|
+                if model.waitForTick then
+                    Html.text " "
+
+                else
+                    Html.text "    "
             ]
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    case model.waitForTick of
+        True ->
+            Browser.Events.onAnimationFrame <| \_ -> Tick
+
+        _ ->
+            Sub.none
 
 
 makeAppWithMeasurements : List Computation -> Program {} Model Msg
@@ -314,5 +345,5 @@ makeAppWithMeasurements computations =
         { init = \_ -> init computations
         , update = update
         , view = view
-        , subscriptions = \_ -> Sub.none
+        , subscriptions = subscriptions
         }
