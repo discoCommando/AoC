@@ -261,10 +261,6 @@ update msg model =
 
 view : Model -> Html.Html msg
 view model =
-    let
-        _ =
-            Debug.log "view" model
-    in
     Html.div [] <|
         List.concat
             [ model.loaded

@@ -10,7 +10,6 @@ type alias Loop a x = Int -> Array a -> x -> Maybe (ForState a x)
 for : Array a -> x -> Loop a x -> ForState a x
 for = forHelper  0
 
-
 forHelper : Int -> Array a -> x -> Loop a x -> ForState a x
 forHelper i a x f =
     if (i >= Array.length a) then ForState a x
@@ -28,5 +27,10 @@ get : Int -> Array a -> ForState a a
 get i a =
     Helpers.uG i a |> ForState a
 
-andThen : (b -> ForState a c) -> ForState a b -> ForState a c
-andThen 
+--andThen : (b -> ForState a c) -> ForState a b -> ForState a c
+--andThen
+
+for [1,2,3] () (\i () ->
+    get i
+    |>
+)

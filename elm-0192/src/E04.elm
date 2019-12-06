@@ -1,6 +1,8 @@
 module E04 exposing (..)
 
 import Array exposing (Array)
+import Benchmark
+import Benchmark.Runner
 import Dict exposing (Dict)
 import Helpers
 import Intcode
@@ -15,8 +17,20 @@ main =
         ]
 
 
+
+--    Benchmark.describe "e04"
+--        [ Benchmark.benchmark "part1" result1
+--        , Benchmark.benchmark "part2" result2
+--        ]
+--        |> Benchmark.Runner.program
+
+
 result1 _ =
     generate correctPartOne |> List.length
+
+
+test _ =
+    Dict.insert 1 1 Dict.empty
 
 
 result2 _ =
@@ -120,11 +134,17 @@ generate predicate =
 
 lowerBoundary : Int
 lowerBoundary =
-    --    172930
-    0
+    172930
+
+
+
+--0
 
 
 upperBoundary : Int
 upperBoundary =
-    --    683082
-    999999999999999
+    683082
+
+
+
+--999999999999999
