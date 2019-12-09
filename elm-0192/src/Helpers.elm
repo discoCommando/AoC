@@ -138,6 +138,18 @@ parseAtMost len parser =
                 ]
 
 
+parseExactly : Int -> Parser.Parser a -> Parser.Parser (List a)
+parseExactly len parser =
+    case len of
+        0 ->
+            Parser.succeed []
+
+        _ ->
+            Parser.succeed (::)
+                |= parser
+                |= parseExactly (len - 1) parser
+
+
 log : a -> a
 log =
     Debug.log "XD"
