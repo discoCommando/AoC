@@ -13,6 +13,16 @@ import Task exposing (Task)
 import Time exposing (Posix)
 
 
+ucons : List a -> ( a, List a )
+ucons l =
+    case l of
+        [] ->
+            Debug.todo "ucons"
+
+        a :: rest ->
+            ( a, rest )
+
+
 at : Int -> List x -> x
 at i l =
     case l |> List.drop i |> List.head of
@@ -173,7 +183,6 @@ logIf : String -> x -> Bool -> ()
 logIf m v b =
     if b then
         Debug.log m v |> (\_ -> ())
-
     else
         ()
 
@@ -331,7 +340,6 @@ view model =
             , List.singleton <|
                 if model.waitForTick then
                     Html.text " "
-
                 else
                     Html.text "    "
             ]

@@ -19,12 +19,12 @@ parsed =
 
 initialStatePart1 : State
 initialStatePart1 =
-    { array = parsed, input = 1, output = 0 }
+    { array = parsed, input = [ 1 ], output = [] }
 
 
 initialStatePart2 : State
 initialStatePart2 =
-    { array = parsed, input = 5, output = 0 }
+    { array = parsed, input = [ 5 ], output = [] }
 
 
 result1 =

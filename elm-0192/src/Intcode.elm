@@ -190,15 +190,20 @@ jumpIf c out op state =
     in
     if op v1 then
         Constant v2
-
     else
         Plus 3
 
 
+type Status
+    = Going Int
+    | Halted
+
+
 type alias State =
     { array : Array Int
-    , input : Int
-    , output : Int
+    , input : List Int
+    , output : List Int
+    , status : Status
     }
 
 
@@ -207,82 +212,73 @@ type Index
     | Plus Int
 
 
-operation : Action -> Maybe (State -> ( Index, State ))
-operation a =
+type OperationResult
+    = Halt_
+    | Next Index State
+    | WaitForInput
+
+
+operation : Action -> State -> OperationResult
+operation a state =
     case a of
         Add c1 c2 o ->
-            binaryOperation c1 c2 o (+) >> Tuple.pair (Plus 4) |> Just
+            binaryOperation c1 c2 o (+) state |> Next (Plus 4)
 
         Mult c1 c2 o ->
-            binaryOperation c1 c2 o (*) >> Tuple.pair (Plus 4) |> Just
+            binaryOperation c1 c2 o (*) state |> Next (Plus 4)
 
         Halt ->
-            Nothing
+            Halt_
 
         Input c ->
-            (\state ->
-                let
-                    v1 =
-                        get c state.array
-                in
-                { state | array = Array.set v1 state.input state.array }
-            )
-                >> Tuple.pair (Plus 2)
-                |> Just
+            case state.input of
+                [] ->
+                    WaitForInput
+
+                input :: rest ->
+                    let
+                        v1 =
+                            get c state.array
+                    in
+                    { state | array = Array.set v1 input state.array, input = rest }
+                        |> Next (Plus 2)
 
         Output c ->
-            (\state ->
-                let
-                    v1 =
-                        get c state.array
+            let
+                v1 =
+                    get c state.array
 
-                    _ =
-                        Debug.log "output" output
-
-                    output =
-                        --                        Helpers.uG v1 state.array
-                        v1
-                in
-                { state | output = output }
-            )
-                >> Tuple.pair (Plus 2)
-                |> Just
+                output =
+                    v1
+            in
+            { state | output = output :: state.output }
+                |> Next (Plus 2)
 
         IfTrue c o ->
-            (\state ->
-                Tuple.pair
-                    (jumpIf c
-                        o
-                        (\i ->
-                            if i == 0 then
-                                False
-
-                            else
-                                True
-                        )
-                        state
-                    )
-                    state
-            )
-                |> Just
+            jumpIf c
+                o
+                (\i ->
+                    if i == 0 then
+                        False
+                    else
+                        True
+                )
+                state
+                |> Next
+                |> (|>) state
 
         IfFalse c o ->
-            (\state ->
-                Tuple.pair
-                    (jumpIf c
-                        o
-                        (\i ->
-                            if i == 0 then
-                                True
-
-                            else
-                                False
-                        )
-                        state
-                    )
-                    state
-            )
-                |> Just
+            jumpIf c
+                o
+                (\i ->
+                    if i == 0 then
+                        True
+                    else
+                        False
+                )
+                state
+                |> Next
+                |> (|>) state
 
         LessThan c1 c2 o ->
             binaryOperation c1
@@ -291,12 +287,11 @@ operation a =
                 (\v1 v2 ->
                     if v1 < v2 then
                         1
-
                     else
                         0
                 )
-                >> Tuple.pair (Plus 4)
-                |> Just
+                state
+                |> Next (Plus 4)
 
         Equals c1 c2 o ->
             binaryOperation c1
@@ -305,41 +300,42 @@ operation a =
                 (\v1 v2 ->
                     if v1 == v2 then
                         1
-
                     else
                         0
                 )
-                >> Tuple.pair (Plus 4)
-                |> Just
+                state
+                |> Next (Plus 4)
 
 
-walk : Int -> State -> State
-walk i state =
-    let
-        action =
-            getAction i state.array |> Debug.log "action"
+walk : State -> State
+walk state =
+    case state.status of
+        Halted ->
+            { state | output = state.input, input = [] }
 
-        moperation =
-            operation action
-    in
-    case moperation of
-        Nothing ->
-            state
-
-        Just stateF ->
+        Going i ->
             let
-                ( index, nextState ) =
-                    stateF state
+                action =
+                    getAction i state.array
 
-                newIndex =
-                    case index of
-                        Plus x ->
-                            i + x
-
-                        Constant x ->
-                            x
-
-                _ =
-                    Debug.log "offset" index
+                moperation =
+                    operation action state
             in
-            walk newIndex nextState
+            case moperation of
+                WaitForInput ->
+                    state
+
+                Halt_ ->
+                    { state | status = Halted }
+
+                Next index nextState ->
+                    let
+                        newIndex =
+                            case index of
+                                Plus x ->
+                                    i + x
+
+                                Constant x ->
+                                    x
+                    in
+                    walk { nextState | status = Going newIndex }
