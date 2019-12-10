@@ -1,6 +1,7 @@
 module Intcode exposing (..)
 
 import Array exposing (Array)
+import Dict exposing (Dict)
 import Helpers
 
 
@@ -60,9 +61,10 @@ encodeMode m =
             2
 
 
-getCell : Mode -> Int -> Array Int -> Cell
+getCell : Mode -> Int -> Dict Int Int -> Cell
 getCell mode index array =
-    Helpers.uG index array
+    Dict.get index array
+        |> Helpers.uM
         |> Cell
         |> (|>) mode
 
@@ -72,11 +74,11 @@ immediateCell i =
     Cell i Immediate
 
 
-getAction : Int -> Array Int -> Action
+getAction : Int -> Dict Int Int -> Action
 getAction index array =
     let
         value =
-            array |> Helpers.uG index
+            array |> Dict.get index |> Helpers.uM
 
         opcode =
             value |> Basics.modBy 100
@@ -95,20 +97,20 @@ getAction index array =
             Add
                 (getCell mode1 (index + 1) array)
                 (getCell mode2 (index + 2) array)
-                (getCell Immediate (index + 3) array)
+                (getCell mode3 (index + 3) array)
 
         2 ->
             Mult
                 (getCell mode1 (index + 1) array)
                 (getCell mode2 (index + 2) array)
-                (getCell Immediate (index + 3) array)
+                (getCell mode3 (index + 3) array)
 
         99 ->
             Halt
 
         3 ->
             Input
-                (getCell Immediate (index + 1) array)
+                (getCell mode1 (index + 1) array)
 
         4 ->
             Output
@@ -128,23 +130,15 @@ getAction index array =
             LessThan
                 (getCell mode1 (index + 1) array)
                 (getCell mode2 (index + 2) array)
-                (getCell Immediate (index + 3) array)
+                (getCell mode3 (index + 3) array)
 
         8 ->
             Equals
                 (getCell mode1 (index + 1) array)
                 (getCell mode2 (index + 2) array)
-                (getCell Immediate (index + 3) array)
+                (getCell mode3 (index + 3) array)
 
         9 ->
-            let
-                _ =
-                    Debug.log "aaa" ( [ value, opcode ], [ mode1, mode2, mode3 ] )
-
-                _ =
-                    Debug.log "bbb"
-                        (getCell mode1 (index + 1) array)
-            in
             SetRelativeBase
                 (getCell mode1 (index + 1) array)
 
@@ -162,11 +156,22 @@ decodeMode i =
         |> Tuple.first
 
 
-extendState : Int -> State -> State
-extendState i s =
-    Array.repeat (i - Array.length s.array) 0
-        |> Array.append s.array
-        |> (\a -> { s | array = a })
+
+--extendState : Int -> State -> State
+--extendState i s =
+--    Array.repeat (i - Array.length s.array) 0
+--        |> Array.append s.array
+--        |> (\a -> { s | array = a })
+
+
+getFromDict : Int -> Dict Int Int -> Int
+getFromDict i d =
+    case Dict.get i d of
+        Nothing ->
+            0
+
+        Just i_ ->
+            i_
 
 
 get : Cell -> State -> Int
@@ -176,22 +181,23 @@ get { mode, index } state =
             index
 
         Position ->
-            Array.get index state.array |> Maybe.withDefault 0
+            getFromDict index state.array
 
         Relative ->
-            Array.get (state.relativeBase + index) state.array |> Maybe.withDefault 0
+            getFromDict (state.relativeBase + index) state.array
 
 
+write : Cell -> Int -> State -> State
+write { mode, index } value state =
+    case mode of
+        Immediate ->
+            Debug.todo "write in immediate mode"
 
---            get (Cell (Helpers.uG index array) Immediate) array
---nextPosition : Action -> Int
---nextPosition action =
---    case action of
---        Add _ _ _ -> 4
---        Mult _ _ _ -> 4
---        Input _ -> 2
---        Output _ -> 2
---        _ -> Debug.todo "nextPosition"
+        Position ->
+            { state | array = Dict.insert index value state.array }
+
+        Relative ->
+            { state | array = Dict.insert (index + state.relativeBase) value state.array }
 
 
 binaryOperation : Cell -> Cell -> Cell -> (Int -> Int -> Int) -> State -> State
@@ -202,14 +208,8 @@ binaryOperation c1 c2 out op state =
 
         v2 =
             get c2 state
-
-        vout =
-            out.index
-
-        extendedState =
-            extendState vout state
     in
-    { extendedState | array = Array.set vout (op v1 v2) extendedState.array }
+    write out (op v1 v2) state
 
 
 jumpIf : Cell -> Cell -> (Int -> Bool) -> State -> Index
@@ -234,7 +234,7 @@ type Status
 
 
 type alias State =
-    { array : Array Int
+    { array : Dict Int Int
     , input : List Int
     , output : List Int
     , status : Status
@@ -272,10 +272,10 @@ operation a state =
 
                 input :: rest ->
                     let
-                        v1 =
-                            get c state
+                        stateAfterWrite =
+                            write c input state
                     in
-                    { state | array = Array.set v1 input state.array, input = rest }
+                    { stateAfterWrite | input = rest }
                         |> Next (Plus 2)
 
         Output c ->
@@ -346,10 +346,6 @@ operation a state =
                 |> Next (Plus 4)
 
         SetRelativeBase c1 ->
-            let
-                _ =
-                    Debug.log "dupa" ( state, c1 )
-            in
             get c1 state
                 |> (\v ->
                         { state | relativeBase = state.relativeBase + v }
@@ -357,28 +353,8 @@ operation a state =
                 |> Next (Plus 2)
 
 
-printState : State -> String
-printState state =
-    [ "relative base: "
-    , state.relativeBase |> Debug.toString
-    , "input: "
-    , state.input |> Debug.toString
-    , "output: "
-    , state.output |> Debug.toString
-    , "statys: "
-    , state.status |> Debug.toString
-    , "array: "
-    , state.array |> Array.indexedMap Tuple.pair |> Debug.toString
-    ]
-        |> String.join " "
-
-
 walk : State -> State
 walk state =
-    let
-        _ =
-            Debug.log "state" (printState state)
-    in
     case state.status of
         Halted ->
             { state | output = state.input, input = [] }
@@ -386,10 +362,10 @@ walk state =
         Going i ->
             let
                 action =
-                    getAction i state.array |> Debug.log "accction"
+                    getAction i state.array
 
                 moperation =
-                    operation action state |> Debug.log "moperatoin"
+                    operation action state
             in
             case moperation of
                 WaitForInput ->

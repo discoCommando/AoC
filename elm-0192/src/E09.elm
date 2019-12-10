@@ -9,11 +9,11 @@ import Set exposing (Set)
 
 
 main =
-    Helpers.makeMain [ Debug.toString <| result1 input, Debug.toString <| getAction 0 (Array.fromList [ 209, 10 ]) ]
+    Helpers.makeMain [ Debug.toString <| result1 input, Debug.toString <| result2 input ]
 
 
 parsed i =
-    String.split "," i |> List.map Helpers.toI |> Array.fromList
+    String.split "," i |> List.map Helpers.toI |> List.indexedMap Tuple.pair |> Dict.fromList
 
 
 initialState : String -> State
@@ -26,12 +26,22 @@ initialState i =
     }
 
 
+initialStatePart2 : String -> State
+initialStatePart2 i =
+    { array = parsed i
+    , input = [ 2 ]
+    , output = []
+    , status = Going 0
+    , relativeBase = 0
+    }
+
+
 result1 i =
     initialState i |> walk
 
 
-result2 =
-    ""
+result2 i =
+    initialStatePart2 i |> walk
 
 
 testInput1 =

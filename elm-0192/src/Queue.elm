@@ -1,4 +1,4 @@
-module Queue exposing (Queue, StepResult(..), push, singleton, step)
+module Queue exposing (Queue, StepResult(..), isEmpty, pop, push, singleton, size, step)
 
 
 type alias Queue a =
@@ -32,6 +32,11 @@ size =
     List.length
 
 
+isEmpty : Queue a -> Bool
+isEmpty =
+    List.isEmpty
+
+
 type StepResult a r
     = Finish r
     | Next (Queue a)
@@ -46,6 +51,7 @@ stepHelper : Int -> (a -> Queue a -> StepResult a r) -> Queue a -> StepResult a 
 stepHelper length f q =
     if length == 0 then
         Next q
+
     else
         let
             ( a, nq ) =
