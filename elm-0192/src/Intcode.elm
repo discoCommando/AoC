@@ -18,11 +18,13 @@ type Action
     | IfFalse Cell Cell
     | LessThan Cell Cell Cell
     | Equals Cell Cell Cell
+    | SetRelativeBase Cell
 
 
 type Mode
     = Position
     | Immediate
+    | Relative
 
 
 nextMode : Mode -> List Mode
@@ -33,6 +35,9 @@ nextMode m =
                     nextMode Immediate
 
                 Immediate ->
+                    nextMode Relative
+
+                Relative ->
                     []
            )
 
@@ -50,6 +55,9 @@ encodeMode m =
 
         Immediate ->
             1
+
+        Relative ->
+            2
 
 
 getCell : Mode -> Int -> Array Int -> Cell
@@ -128,6 +136,18 @@ getAction index array =
                 (getCell mode2 (index + 2) array)
                 (getCell Immediate (index + 3) array)
 
+        9 ->
+            let
+                _ =
+                    Debug.log "aaa" ( [ value, opcode ], [ mode1, mode2, mode3 ] )
+
+                _ =
+                    Debug.log "bbb"
+                        (getCell mode1 (index + 1) array)
+            in
+            SetRelativeBase
+                (getCell mode1 (index + 1) array)
+
         _ ->
             Debug.todo <| "opcode " ++ Debug.toString opcode
 
@@ -142,14 +162,24 @@ decodeMode i =
         |> Tuple.first
 
 
-get : Cell -> Array Int -> Int
-get { mode, index } array =
+extendState : Int -> State -> State
+extendState i s =
+    Array.repeat (i - Array.length s.array) 0
+        |> Array.append s.array
+        |> (\a -> { s | array = a })
+
+
+get : Cell -> State -> Int
+get { mode, index } state =
     case mode of
         Immediate ->
             index
 
         Position ->
-            Helpers.uG index array
+            Array.get index state.array |> Maybe.withDefault 0
+
+        Relative ->
+            Array.get (state.relativeBase + index) state.array |> Maybe.withDefault 0
 
 
 
@@ -168,28 +198,32 @@ binaryOperation : Cell -> Cell -> Cell -> (Int -> Int -> Int) -> State -> State
 binaryOperation c1 c2 out op state =
     let
         v1 =
-            get c1 state.array
+            get c1 state
 
         v2 =
-            get c2 state.array
+            get c2 state
 
         vout =
             out.index
+
+        extendedState =
+            extendState vout state
     in
-    { state | array = Array.set vout (op v1 v2) state.array }
+    { extendedState | array = Array.set vout (op v1 v2) extendedState.array }
 
 
 jumpIf : Cell -> Cell -> (Int -> Bool) -> State -> Index
 jumpIf c out op state =
     let
         v1 =
-            get c state.array
+            get c state
 
         v2 =
-            get out state.array
+            get out state
     in
     if op v1 then
         Constant v2
+
     else
         Plus 3
 
@@ -204,6 +238,7 @@ type alias State =
     , input : List Int
     , output : List Int
     , status : Status
+    , relativeBase : Int
     }
 
 
@@ -238,7 +273,7 @@ operation a state =
                 input :: rest ->
                     let
                         v1 =
-                            get c state.array
+                            get c state
                     in
                     { state | array = Array.set v1 input state.array, input = rest }
                         |> Next (Plus 2)
@@ -246,7 +281,7 @@ operation a state =
         Output c ->
             let
                 v1 =
-                    get c state.array
+                    get c state
 
                 output =
                     v1
@@ -260,6 +295,7 @@ operation a state =
                 (\i ->
                     if i == 0 then
                         False
+
                     else
                         True
                 )
@@ -273,6 +309,7 @@ operation a state =
                 (\i ->
                     if i == 0 then
                         True
+
                     else
                         False
                 )
@@ -287,6 +324,7 @@ operation a state =
                 (\v1 v2 ->
                     if v1 < v2 then
                         1
+
                     else
                         0
                 )
@@ -300,15 +338,47 @@ operation a state =
                 (\v1 v2 ->
                     if v1 == v2 then
                         1
+
                     else
                         0
                 )
                 state
                 |> Next (Plus 4)
 
+        SetRelativeBase c1 ->
+            let
+                _ =
+                    Debug.log "dupa" ( state, c1 )
+            in
+            get c1 state
+                |> (\v ->
+                        { state | relativeBase = state.relativeBase + v }
+                   )
+                |> Next (Plus 2)
+
+
+printState : State -> String
+printState state =
+    [ "relative base: "
+    , state.relativeBase |> Debug.toString
+    , "input: "
+    , state.input |> Debug.toString
+    , "output: "
+    , state.output |> Debug.toString
+    , "statys: "
+    , state.status |> Debug.toString
+    , "array: "
+    , state.array |> Array.indexedMap Tuple.pair |> Debug.toString
+    ]
+        |> String.join " "
+
 
 walk : State -> State
 walk state =
+    let
+        _ =
+            Debug.log "state" (printState state)
+    in
     case state.status of
         Halted ->
             { state | output = state.input, input = [] }
@@ -316,10 +386,10 @@ walk state =
         Going i ->
             let
                 action =
-                    getAction i state.array
+                    getAction i state.array |> Debug.log "accction"
 
                 moperation =
-                    operation action state
+                    operation action state |> Debug.log "moperatoin"
             in
             case moperation of
                 WaitForInput ->
