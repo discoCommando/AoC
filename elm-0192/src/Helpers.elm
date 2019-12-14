@@ -107,6 +107,16 @@ toI =
     String.toInt >> uM
 
 
+parseInt : Parser.Parser Int
+parseInt =
+    Parser.oneOf
+        [ Parser.succeed negate
+            |. Parser.symbol "-"
+            |= Parser.int
+        , Parser.int
+        ]
+
+
 countApp : comparable -> Dict.Dict comparable Int -> Dict.Dict comparable Int
 countApp a =
     Dict.update a
