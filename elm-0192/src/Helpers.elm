@@ -6,6 +6,7 @@ import Browser.Events
 import Char
 import Dict
 import Html
+import Html.Attributes
 import Parser exposing ((|.), (|=))
 import Process
 import String
@@ -101,6 +102,9 @@ makeMain : List String -> Html.Html msg
 makeMain =
     List.map (Html.text >> List.singleton >> Html.p []) >> Html.div []
 
+monospaceMain : List (Html.Html a) -> Html.Html a
+monospaceMain h =
+    Html.div [Html.Attributes.style "font-family" "\"Courier New\""] h
 
 toI : String -> Int
 toI =

@@ -1,19 +1,98 @@
 module E13 exposing (..)
 
 import Array exposing (Array)
+import Browser
+import Browser.Events exposing (onKeyPress)
 import Dict exposing (Dict)
 import Helpers
+import Html exposing (Html)
 import Intcode
+import Json.Decode as Decode
 import Parser exposing (..)
 import Set exposing (Set)
 
 
 main =
-    Helpers.makeMain [ Debug.toString result1, Debug.toString result2 ]
+    Browser.element
+        { init = init
+        , view = view
+        , update = update
+        , subscriptions = subscriptions
+        }
+
+
+
+--    Helpers.makeMain [ Debug.toString result1, Debug.toString result2 ]
+
+
+view : Model -> Html Msg
+view model =
+    let
+        strings =
+            model.board |> boardToString
+    in
+    Html.div []
+        [ strings
+            |> List.map (Html.text >> List.singleton >> Html.p [])
+            |> Html.div []
+        , Html.text ("Score: " ++ String.fromInt model.score)
+        ]
+
+
+keyDecoder : Decode.Decoder Msg
+keyDecoder =
+    Decode.map toDirection (Decode.field "key" Decode.string)
+
+
+toDirection : String -> Msg
+toDirection string =
+    let
+        _ =
+            Debug.log "key" string
+    in
+    case string of
+        "a" ->
+            Left
+
+        "w" ->
+            Right
+
+        _ ->
+            Stay
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    onKeyPress keyDecoder
 
 
 parsed =
     String.split "," input |> List.map Helpers.toI |> List.indexedMap Tuple.pair |> Dict.fromList
+
+
+type alias Board =
+    Array (Array Tile)
+
+
+type Direction
+    = R
+    | L
+
+
+type alias Model =
+    { state : Intcode.State, board : Board, score : Int, paddleX : Int }
+
+
+
+--initialModel : IntcodejModel
+--initialModel state =
+--    Model state
+
+
+type Msg
+    = Stay
+    | Left
+    | Right
 
 
 type Tile
@@ -50,21 +129,238 @@ type alias Position =
     { x : Int, y : Int, tile : Tile }
 
 
-getPositions : List Int -> List Position
-getPositions l =
+type Output
+    = Pos Position
+    | Score Int
+
+
+getPositions : List Output -> List Position
+getPositions outputs =
+    outputs
+        |> List.filterMap
+            (\output ->
+                case output of
+                    Pos p ->
+                        Just p
+
+                    _ ->
+                        Nothing
+            )
+
+
+parseOutputs : List Int -> List Output
+parseOutputs l =
     case l of
         [] ->
             []
 
         x :: y :: t :: rest ->
-            Position x y (intToTile t) :: getPositions rest
+            (if (x == -1) && (y == 0) then
+                Score t
+             else
+                Pos <| Position x y (intToTile t)
+            )
+                :: parseOutputs rest
 
         _ ->
             Debug.todo "getPositions"
 
 
+set : Position -> Board -> Board
+set position board =
+    let
+        row =
+            Helpers.uG position.y board
+    in
+    Array.set position.y (Array.set position.x position.tile row) board
+
+
+updateOutputs : List Output -> Model -> Model
+updateOutputs outputs model =
+    case outputs of
+        [] ->
+            model
+
+        output :: rest ->
+            updateOutputs rest
+                (case output of
+                    Pos position ->
+                        case position.tile of
+                            HPaddle ->
+                                { model | board = model.board |> set position, paddleX = position.x }
+
+                            _ ->
+                                { model | board = model.board |> set position }
+
+                    Score t ->
+                        { model | score = t }
+                )
+
+
+createBoard : List Position -> Board
+createBoard positions =
+    let
+        maxx =
+            positions |> List.map .x |> List.maximum |> Helpers.uM
+
+        maxy =
+            positions |> List.map .y |> List.maximum |> Helpers.uM
+
+        emptyBoard =
+            Array.initialize (maxy + 1)
+                (\y ->
+                    Array.initialize (maxx + 1)
+                        (\x ->
+                            Empty
+                        )
+                )
+    in
+    positions |> List.foldl set emptyBoard
+
+
+boardToString : Board -> List String
+boardToString board =
+    board
+        |> Array.toList
+        |> List.map
+            (Array.toList
+                >> List.map
+                    (\tile ->
+                        case tile of
+                            Empty ->
+                                'E'
+
+                            Wall ->
+                                '#'
+
+                            Block ->
+                                'B'
+
+                            HPaddle ->
+                                'H'
+
+                            Ball ->
+                                'O'
+                    )
+                >> String.fromList
+            )
+
+
+msgToInt : Msg -> Int
+msgToInt msg =
+    case msg of
+        Stay ->
+            0
+
+        Left ->
+            -1
+
+        Right ->
+            1
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    --    let
+    --        msgInt =
+    --            msgToInt msg
+    --
+    --        intcodeState =
+    --            model.state
+    --
+    --        outputs =
+    --            intcodeState.output |> List.reverse |> parseOutputs
+    --    in
+    --    ( { model | state = { intcodeState | output = [], input = [ msgInt ] } |> Intcode.walk } |> updateOutputs outputs, Cmd.none )
+    ( (cycle >> cycle >> cycle >> cycle >> cycle >> cycle) model, Cmd.none )
+
+
+getBall : List Position -> Position
+getBall =
+    List.filter (.tile >> (==) Ball) >> Helpers.at 0
+
+
+cycle : Model -> Model
+cycle model =
+    case model.state.status of
+        Intcode.Halted ->
+            model
+
+        _ ->
+            let
+                state =
+                    model.state
+
+                _ =
+                    Debug.log "score" model.score
+
+                _ =
+                    Debug.log "board" model.board
+
+                previousBall =
+                    state.output |> List.reverse |> parseOutputs |> getPositions |> Debug.log "c0" |> List.filter (.tile >> (==) Ball) |> List.head |> Maybe.withDefault { tile = Ball, x = 0, y = 0 }
+
+                ball =
+                    { state | input = [ 0 ], output = [] } |> Intcode.walk |> .output |> List.reverse |> parseOutputs |> getPositions |> Debug.log "c1" |> List.filter (.tile >> (==) Ball) |> List.head |> Maybe.withDefault previousBall
+
+                dirInt =
+                    if previousBall.y == 18 && ball.y == 17 && previousBall.x - model.paddleX == 0 then
+                        0
+                    else
+                        ball.x - model.paddleX
+
+                _ =
+                    Debug.log "c2" ( dirInt, ball, model.paddleX )
+
+                newState =
+                    { state | input = [ dirInt ], output = [] } |> Intcode.walk
+
+                _ =
+                    Debug.log "c3" (newState.output |> List.reverse |> parseOutputs)
+
+                newOutputs =
+                    newState |> .output |> List.reverse |> parseOutputs
+            in
+            { model | paddleX = model.paddleX + dirInt, state = newState } |> updateOutputs newOutputs
+
+
+
+--    let
+--       dir = case model.ballDirection of
+--            R -> 1
+--            L -> -1
+--       positionToCheck = model.ballPosition |> \(x, y) -> (x + dir, y)
+--       tile = model.board |> Helpers.uG y |> Helpers.uG x
+--       isBlocking = tile /= Empty
+--       state = model.state
+--       newDirection = if isBlocking then case model.ballDirection of
+--            R -> L
+--            L -> R
+--
+--    in
+--        { model | ballDirection = newDirection
+--        , state = { state | output = [], input = [ case newDirection of
+--            R -> 1
+--            L -> -1] } |> Intcode.walk }
+
+
 initialState1 =
     Intcode.State parsed [] [] (Intcode.Going 0) 0
+
+
+initialState2 =
+    Intcode.State (parsed |> Dict.insert 0 2) [] [] (Intcode.Going 0) 0 |> Intcode.walk
+
+
+init : {} -> ( Model, Cmd Msg )
+init _ =
+    Tuple.pair
+        { state = { initialState2 | output = [] }
+        , score = 0
+        , board = createBoard (initialState2.output |> List.reverse |> parseOutputs |> Debug.log "aaa" |> getPositions)
+        , paddleX = 21
+        }
+        Cmd.none
 
 
 result1 =
@@ -73,13 +369,14 @@ result1 =
         |> Debug.log "state"
         |> .output
         |> List.reverse
+        |> parseOutputs
         |> getPositions
         |> List.filter (.tile >> (==) Block)
         |> List.length
 
 
 result2 =
-    ""
+    init {} |> Tuple.first |> cycle
 
 
 input =

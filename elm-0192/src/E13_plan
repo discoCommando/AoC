@@ -1,0 +1,5 @@
+for part2
+    write a view that lets you play 
+    msgs are joystick movements
+    view renders a board and shows the score
+    

@@ -1,0 +1,56 @@
+this is all worthless
+
+type Turn = L | R
+
+--type Move = T Turn | M Int
+
+type Node1 = Node (Maybe Move) Int (List Node)
+
+type Node2 a = Node2 Position a a a
+
+map : (a -> b) -> Node2 a -> Node2 b
+
+
+
+recursion:
+    parameters: 
+        board : Dict Position Tile
+        visited : Set Position
+        direction : Direction 
+        currentPosition : Position -- add to set
+    
+    returns: 
+        Maybe Node2 (Maybe Node2)
+  
+    how it works: 
+        check if its empty in the board
+        check if not visited 
+        add currentToVisited
+        Node2 Position (turn L direction) direction (turn R direction)
+            |> map (\ d -> move d currentPosition |> recursion board newVisited d)
+
+        
+checkFull: 
+    params:
+        board : Dict Position Tile
+        node : Node2 (Maybe Node2)
+        
+    returns: 
+        Maybe Node2
+    
+    how it works: 
+        remove position from dict
+        if all Nothing -> check if dict is empty
+        else
+            this |> map (Maybe.map <| checkFull newBoard)
+
+type Node3
+
+
+
+
+
+
+
+
+how to get the pattern

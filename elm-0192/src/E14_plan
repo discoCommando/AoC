@@ -1,0 +1,22 @@
+some kind of the recursion 
+
+1 fuel -> 7a 7a 7a 7a 1b 
+
+1 Fuel -> 7a 1e
+7a -> check if 7a is available 
+    if not then add 7a 
+    else take it 
+
+take { name, quantity } = 
+    if quantity is available 
+        take it 
+    else 
+        add { name, quantity - whatever is available } 
+        take it
+
+add { name, quantity } =
+    get name from dict = { ingredients, outputQuantity }
+    let quantityPossible = ceiling from quantity / outputQuantity 
+    ingredients 
+        |> foldl ((*) quantityNeeded >> take)
+    add to available { name, quantityPossible }
