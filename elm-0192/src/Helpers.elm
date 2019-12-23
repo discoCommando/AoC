@@ -102,9 +102,30 @@ makeMain : List String -> Html.Html msg
 makeMain =
     List.map (Html.text >> List.singleton >> Html.p []) >> Html.div []
 
+
 monospaceMain : List (Html.Html a) -> Html.Html a
 monospaceMain h =
-    Html.div [Html.Attributes.style "font-family" "\"Courier New\""] h
+    Html.div [ Html.Attributes.style "font-family" "\"Courier New\"" ] h
+
+
+type Main
+    = Main (List String)
+
+
+makeMain2 : Main -> Html.Html a
+makeMain2 (Main x) =
+    monospaceMain [ makeMain x ]
+
+
+initMain : Main
+initMain =
+    Main []
+
+
+addToMain : a -> Main -> Main
+addToMain a (Main x) =
+    Main (x ++ [ a |> Debug.toString ])
+
 
 toI : String -> Int
 toI =
@@ -197,183 +218,11 @@ logIf : String -> x -> Bool -> ()
 logIf m v b =
     if b then
         Debug.log m v |> (\_ -> ())
+
     else
         ()
 
 
-type alias Computation =
-    { name : String
-    , compute : () -> String
-    }
-
-
-type alias ComputationResult =
-    { name : String
-    , value : String
-    }
-
-
-type alias Measurement =
-    { name : String
-    , value : String
-    , time : Int
-    }
-
-
-type Msg
-    = Time Posix
-    | Tick
-
-
-type ComputationState
-    = Started Posix Computation
-    | Finished Posix ComputationResult
-    | NoneRunning
-
-
-type alias Model =
-    { inQueue : List Computation
-    , loading : ComputationState
-    , loaded : List Measurement
-    , waitForTick : Bool
-    }
-
-
-init : List Computation -> ( Model, Cmd Msg )
-init computations =
-    ( Model computations NoneRunning [] True, Cmd.none )
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        Tick ->
-            case model.loading of
-                NoneRunning ->
-                    ( Model model.inQueue model.loading model.loaded False, Task.perform Time Time.now )
-
-                Started startPosix computation ->
-                    let
-                        computationResult =
-                            ComputationResult computation.name (computation.compute ())
-                    in
-                    ( Model model.inQueue
-                        (Finished startPosix computationResult)
-                        model.loaded
-                        False
-                    , Task.perform Time Time.now
-                    )
-
-                _ ->
-                    Debug.todo "shouldn't happen"
-
-        Time posix ->
-            case model.loading of
-                NoneRunning ->
-                    case model.inQueue of
-                        [] ->
-                            ( model, Cmd.none )
-
-                        computation :: rest ->
-                            ( Model rest (Started posix computation) model.loaded True, Cmd.none )
-
-                Started startPosix computation ->
-                    Debug.todo "shouldn't happen 3"
-
-                Finished startPosix computationResult ->
-                    let
-                        time =
-                            Time.posixToMillis posix - Time.posixToMillis startPosix
-                    in
-                    ( Model
-                        model.inQueue
-                        NoneRunning
-                        (model.loaded ++ [ Measurement computationResult.name computationResult.value time ])
-                        True
-                    , Cmd.none
-                    )
-
-
-view : Model -> Html.Html msg
-view model =
-    Html.div [] <|
-        List.concat
-            [ model.loaded
-                |> List.map
-                    (\measurement ->
-                        [ "name:"
-                        , measurement.name
-                        , "value:"
-                        , measurement.value
-                        , "run in: "
-                        , measurement.time |> Debug.toString
-                        , "ms"
-                        ]
-                            |> String.join " "
-                            |> Html.text
-                            |> List.singleton
-                            |> Html.p []
-                    )
-            , List.singleton <|
-                case model.loading of
-                    NoneRunning ->
-                        Html.text ""
-
-                    Started _ computation ->
-                        [ "name:"
-                        , computation.name
-                        , "has started"
-                        ]
-                            |> String.join " "
-                            |> Html.text
-                            |> List.singleton
-                            |> Html.p []
-
-                    Finished _ result ->
-                        [ "name:"
-                        , result.name
-                        , "value:"
-                        , result.value
-                        ]
-                            |> String.join " "
-                            |> Html.text
-                            |> List.singleton
-                            |> Html.p []
-            , model.inQueue
-                |> List.map
-                    (\computation ->
-                        [ "name:"
-                        , computation.name
-                        , "is in the queue"
-                        ]
-                            |> String.join " "
-                            |> Html.text
-                            |> List.singleton
-                            |> Html.p []
-                    )
-            , List.singleton <|
-                if model.waitForTick then
-                    Html.text " "
-                else
-                    Html.text "    "
-            ]
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    case model.waitForTick of
-        True ->
-            Browser.Events.onAnimationFrame <| \_ -> Tick
-
-        _ ->
-            Sub.none
-
-
-makeAppWithMeasurements : List Computation -> Program {} Model Msg
-makeAppWithMeasurements computations =
-    Browser.element
-        { init = \_ -> init computations
-        , update = update
-        , view = view
-        , subscriptions = subscriptions
-        }
+crash : String -> a -> b
+crash s a =
+    { reason = s, value = a } |> Debug.toString |> Debug.todo
