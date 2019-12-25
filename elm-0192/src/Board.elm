@@ -2,10 +2,25 @@ module Board exposing (..)
 
 import Array exposing (..)
 import Helpers
+import Set exposing (..)
 
 
 type alias Position =
     { x : Int, y : Int }
+
+
+type alias Visited =
+    Set ( Int, Int )
+
+
+visit : Position -> Visited -> Visited
+visit position =
+    Set.insert ( position.x, position.y )
+
+
+isVisited : Position -> Visited -> Bool
+isVisited position =
+    Set.member ( position.x, position.y )
 
 
 type alias ABoard a =
@@ -15,9 +30,53 @@ type alias ABoard a =
     }
 
 
+init : (Char -> a) -> String -> ABoard a
+init f =
+    String.lines
+        >> List.map (String.toList >> List.map f >> Array.fromList)
+        >> Array.fromList
+        >> (\arr ->
+                { width = Array.get 0 arr |> Maybe.map Array.length |> Maybe.withDefault 0
+                , height = Array.length arr
+                , array = arr
+                }
+           )
+
+
+find : (a -> Bool) -> ABoard a -> List ( Position, a )
+find f board =
+    foldl
+        (\p a ->
+            if f a then
+                (::) ( p, a )
+
+            else
+                identity
+        )
+        []
+        board
+
+
 map : (a -> b) -> ABoard a -> ABoard b
 map f =
     updateArray (Array.map (Array.map f))
+
+
+foldl : (Position -> a -> b -> b) -> b -> ABoard a -> b
+foldl f acc b =
+    foldHelper f acc (Position 0 0) b
+
+
+foldHelper : (Position -> a -> b -> b) -> b -> Position -> ABoard a -> b
+foldHelper f acc p board =
+    if board.height <= p.y then
+        acc
+
+    else if board.width <= p.x then
+        foldHelper f acc (Position 0 (p.y + 1)) board
+
+    else
+        foldHelper f (f p (get p board) acc) (p |> updateX ((+) 1)) board
 
 
 indexedMap : (Position -> a -> b) -> ABoard a -> ABoard b
@@ -187,9 +246,9 @@ setArray val r =
     { r | array = val }
 
 
-updateArray : (Array (Array a) -> Array (Array b)) -> { r | array : Array (Array a) } -> { r | array : Array (Array b) }
-updateArray f ({ array } as r) =
-    { r | array = f array }
+updateArray : (Array (Array a) -> Array (Array b)) -> ABoard a -> ABoard b
+updateArray f r =
+    { width = r.width, height = r.height, array = f r.array }
 
 
 setX : Int -> { r | x : Int } -> { r | x : Int }

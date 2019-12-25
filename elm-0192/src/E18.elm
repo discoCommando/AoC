@@ -1,22 +1,244 @@
 module E18 exposing (..)
 
 import Array exposing (Array)
+import Board exposing (..)
 import Dict exposing (Dict)
 import Helpers
 import Html
 import Intcode
 import Parser exposing (..)
+import Queue as Q
 import Set exposing (Set)
 
 
-type alias State1 =
-    { entrance
+isKey : Char -> Bool
+isKey =
+    Char.isLower
 
+
+isDoor : Char -> Bool
+isDoor =
+    Char.isUpper
+
+
+type alias Path =
+    List Position
+
+
+type alias KeyDoorState =
+    { blockers : List Char, path : Path }
+
+
+type alias KeyDoors =
+    Dict Char KeyDoorState
+
+
+type alias UnsafePositions =
+    Visited
+
+
+getBlocking : Board -> Visited -> KeyDoors -> UnsafePositions -> Q.Queue ( KeyDoorState, Position ) -> ( KeyDoors, UnsafePositions )
+getBlocking board visited blocking unsafePositions queue =
+    if Q.isEmpty queue then
+        Tuple.pair
+            blocking
+            unsafePositions
+
+    else
+        let
+            ( ( { blockers, path }, position ), restQueue ) =
+                Q.pop queue
+        in
+        if visited |> isVisited position then
+            let
+                _ =
+                    Debug.log "unsafe?" position
+            in
+            getBlocking board visited blocking (unsafePositions |> visit position) restQueue
+
+        else
+            let
+                newPath =
+                    position :: path
+
+                ( newBlocking, newBlockers ) =
+                    case board |> get position of
+                        Empty (Just k) ->
+                            Tuple.pair (blocking |> Dict.insert k { blockers = blockers, path = newPath |> List.reverse })
+                                (if isDoor k then
+                                    k :: blockers
+
+                                 else
+                                    blockers
+                                )
+
+                        _ ->
+                            ( blocking, blockers )
+
+                newVisited =
+                    visited |> visit position
+
+                possiblePositions =
+                    getPossiblePositions position (unsafeIf ((==) Wall)) board
+                        |> List.filter (\p -> isVisited p visited |> not)
+            in
+            getBlocking board
+                newVisited
+                newBlocking
+                unsafePositions
+                (possiblePositions
+                    |> List.foldl (\p -> Q.push ( { blockers = newBlockers, path = newPath }, p )) restQueue
+                )
+
+
+type alias State1 =
+    { entrance : Position
+    , blocking : KeyDoors
+    , board : Board
+    , unsafePositions : UnsafePositions
     }
 
 
-result1 =
-    ""
+type Cell
+    = Empty (Maybe Char)
+    | Wall
+
+
+type alias Board =
+    ABoard Cell
+
+
+
+{-
+   1. get dict from key/door to which door is blocking it
+   2. recursion
+       if all doors opened
+           return something
+       if not
+           get all available doors
+               try out recursively
+
+   problems:
+       somehow we need to have the way to get all available doors
+           dict door/key (blocking doors)
+       in each cycle of the function u have to be able to get the path to each step quickly (o(1))
+-}
+
+
+init : String -> Board
+init =
+    Board.init
+        (\c ->
+            case c of
+                '#' ->
+                    Wall
+
+                '@' ->
+                    Empty Nothing
+
+                '.' ->
+                    Empty Nothing
+
+                x ->
+                    Empty (Just x)
+        )
+
+
+findEntrance : String -> Position
+findEntrance =
+    Board.init
+        (\c ->
+            case c of
+                '@' ->
+                    True
+
+                _ ->
+                    False
+        )
+        >> find ((==) True)
+        >> Helpers.at 0
+        >> Tuple.first
+
+
+
+-- add unsafe points
+-- move normally
+-- fix unsafe points
+
+movePath : Path -> Path -> Path
+movePath from other =
+    case from of
+        [] -> other
+        (fromFirst :: fromRest) ->
+            case other of
+                [] -> Helpers.crash "from longer than other" (from, [])
+                (otherFirst :: otherRest) ->
+                    if fromFirst == otherFirst then
+                        movePath fromRest otherRest
+                    else
+                        from ++ other
+
+findUnsafePath : UnsafePositions -> Path -> Path
+findUnsafePath unsafes path =
+    case path of
+        [] -> []
+        (first :: rest) ->
+            if isVisited first unsafes then
+                first :: findUnsafePathHelper unsafes rest
+            else
+                findUnsafePath unsafes rest
+
+findUnsafePathHelper : UnsafePositions -> Path -> Path
+findUnsafePathHelper unsafes path =
+    case path of
+        [] -> Helpers.crash "no other end" []
+        (first :: rest) ->
+            if isVisited first unsafes then
+                [first]
+            else
+                first :: findUnsafePathHelper unsafes rest
+
+fixUnsafes : Path -> Path
+fixUnsafes
+
+
+addGrid : String -> String
+addGrid s =
+    let
+        len =
+            String.lines s |> Helpers.at 0 |> String.length
+
+        firstRow =
+            List.range 0 (len - 1)
+                |> List.map String.fromInt
+                |> String.join ""
+                |> (++) "#"
+    in
+    s
+        |> String.lines
+        |> List.indexedMap (\i l -> Debug.toString i ++ l)
+        |> (::) firstRow
+        |> String.join "\n"
+
+
+result1 : String -> Helpers.Main -> Helpers.Main
+result1 s =
+    let
+        board =
+            init s
+
+        entrance =
+            findEntrance s
+
+        ( blocking, unsafePositions ) =
+            getBlocking board Set.empty Dict.empty Set.empty (Q.singleton ( { blockers = [], path = [] }, entrance ))
+
+        state =
+            State1 entrance blocking board unsafePositions
+    in
+    identity
+        >> Helpers.addMultiline (addGrid s)
+        >> Helpers.addToMain state
 
 
 result2 =
@@ -25,7 +247,7 @@ result2 =
 
 main =
     Helpers.initMain
-        |> Helpers.addToMain result1
+        |> result1 (test Test1 identity)
         |> Helpers.addToMain result2
         |> Helpers.makeMain2
 
@@ -35,6 +257,7 @@ type Test
     | Simple
     | Normal
     | Trivial
+    | Test1
 
 
 test : Test -> (String -> a) -> a
@@ -62,6 +285,13 @@ test t f =
                 """#########
 #b.A.@.a#
 #########"""
+
+            Test1 ->
+                """#######
+#a....#
+##.@.##
+#c....#
+#######"""
 
 
 input =

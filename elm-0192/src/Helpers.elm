@@ -100,7 +100,7 @@ jJ =
 
 makeMain : List String -> Html.Html msg
 makeMain =
-    List.map (Html.text >> List.singleton >> Html.p []) >> Html.div []
+    List.map (String.lines >> List.map (Html.text >> List.singleton >> Html.p []) >> Html.div []) >> Html.div []
 
 
 monospaceMain : List (Html.Html a) -> Html.Html a
@@ -120,6 +120,11 @@ makeMain2 (Main x) =
 initMain : Main
 initMain =
     Main []
+
+
+addMultiline : String -> Main -> Main
+addMultiline s (Main x) =
+    Main (x ++ (s |> String.lines))
 
 
 addToMain : a -> Main -> Main
