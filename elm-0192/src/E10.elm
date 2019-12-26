@@ -67,6 +67,7 @@ initialArray i =
                         Cell Unknown False <|
                             if c == '#' then
                                 Asteroid
+
                             else
                                 Space
                     )
@@ -122,6 +123,7 @@ nwd : Int -> Int -> Int
 nwd a b =
     if b == 0 then
         a
+
     else
         nwd b (a |> modBy b)
 
@@ -151,6 +153,7 @@ bfs : State -> State
 bfs state =
     if Queue.isEmpty state.queue then
         state
+
     else
         let
             ( pos, newQueue ) =
@@ -164,6 +167,7 @@ bfs state =
                 Just cell ->
                     if cell.visited then
                         { state | queue = newQueue }
+
                     else
                         let
                             state_ =
@@ -234,7 +238,7 @@ result1 i =
 
 angle : Position -> Position -> Float
 angle ( x1, y1 ) ( x2, y2 ) =
-    Tuple.pair (x1 - x2) (y2 - y1)
+    Tuple.pair (x2 - x1) (y2 - y1)
         |> Tuple.mapBoth toFloat toFloat
         |> toPolar
         |> Tuple.second
@@ -255,20 +259,27 @@ order f l =
                 in
                 if a11 == 0 then
                     LT
+
                 else if a22 == 0 then
                     GT
+
                 else if a11 > 0 && a22 > 0 then
                     if a11 < a22 then
                         LT
+
                     else
                         GT
+
                 else if a11 < 0 && a22 < 0 then
                     if a11 < a22 then
                         LT
+
                     else
                         GT
+
                 else if a11 < 0 && a22 > 0 then
                     GT
+
                 else
                     LT
             )
@@ -279,7 +290,7 @@ result2 i j =
         ( base, _, state ) =
             initialArray i
                 |> foldOver
-                |> Array.indexedMap (\x -> Array.indexedMap (\y s -> ( ( x, y ), results s, s )) >> Array.toList)
+                |> Array.indexedMap (\y -> Array.indexedMap (\x s -> ( ( x, y ), results s, s )) >> Array.toList)
                 |> Array.toList
                 |> List.concat
                 |> List.sortBy (\( _, x, _ ) -> x)
@@ -287,7 +298,7 @@ result2 i j =
                 |> Helpers.at 0
     in
     state.board
-        |> Array.indexedMap (\x -> Array.indexedMap (\y r -> ( ( x, y ), r )) >> Array.toList)
+        |> Array.indexedMap (\y -> Array.indexedMap (\x r -> ( ( x, y ), r )) >> Array.toList)
         |> Array.toList
         |> List.concat
         |> List.filter (\( _, c ) -> c.inSight == InSight)
@@ -301,6 +312,29 @@ testInput =
 #####
 ....#
 ...##"""
+
+
+testInputBig =
+    """.#..##.###...#######
+##.############..##.
+.#.######.########.#
+.###.#######.####.#.
+#####.##.#.##.###.##
+..#####..#.#########
+####################
+#.####....###.#.#.##
+##.#################
+#####.##.###..####..
+..######..##.#######
+####.##.####...##..#
+.#####..#.######.###
+##...#.##########...
+#.##########.#######
+.####.#.###.###.#.##
+....##.##.###..#####
+.#.#.###########.###
+#.#.#.#####.####.###
+###.##.####.##.#..##"""
 
 
 input =
