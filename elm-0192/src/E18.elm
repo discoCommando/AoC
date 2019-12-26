@@ -7,6 +7,7 @@ import Helpers
 import Html
 import Intcode
 import Parser exposing (..)
+import PriorityQueue as PQ
 import Queue as Q
 import Set exposing (Set)
 
@@ -26,7 +27,7 @@ type alias Path =
 
 
 type alias KeyDoorState =
-    { blockers : Set Char, path : Path }
+    { blockers : Set Char, pathToEntrance : Path, shortestPath : Array Path }
 
 
 type alias KeyDoors =
@@ -46,7 +47,7 @@ getBlocking board visited blocking unsafePositions queue =
 
     else
         let
-            ( ( { blockers, path }, position ), restQueue ) =
+            ( ( { blockers, pathToEntrance }, position ), restQueue ) =
                 Q.pop queue
         in
         if visited |> isVisited position then
@@ -55,12 +56,12 @@ getBlocking board visited blocking unsafePositions queue =
         else
             let
                 newPath =
-                    position :: path
+                    position :: pathToEntrance
 
                 ( newBlocking, newBlockers ) =
                     case board |> get position of
                         Empty (Just k) ->
-                            Tuple.pair (blocking |> Dict.insert k { blockers = blockers, path = newPath |> List.reverse })
+                            Tuple.pair (blocking |> Dict.insert k { blockers = blockers, pathToEntrance = newPath |> List.reverse, shortestPath = Array.initialize 200 (\_ -> []) })
                                 (Set.insert k blockers)
 
                         _ ->
@@ -78,8 +79,39 @@ getBlocking board visited blocking unsafePositions queue =
                 newBlocking
                 unsafePositions
                 (possiblePositions
-                    |> List.foldl (\p -> Q.push ( { blockers = newBlockers, path = newPath }, p )) restQueue
+                    |> List.foldl (\p -> Q.push ( { blockers = newBlockers, pathToEntrance = newPath, shortestPath = Array.empty }, p )) restQueue
                 )
+
+
+shortestPaths : UnsafePositions -> KeyDoors -> KeyDoors
+shortestPaths unsafePositions keyDoors =
+    keyDoors
+        |> Dict.map
+            (\kd kdState ->
+                { kdState
+                    | shortestPath =
+                        let
+                            newKd =
+                                keyDoors
+                                    |> Dict.map
+                                        (\kd2 kdState2 ->
+                                            if kd == kd2 then
+                                                []
+
+                                            else
+                                                movePath unsafePositions kdState.pathToEntrance kdState2.pathToEntrance
+                                                    |> List.reverse
+                                        )
+                                    |> Dict.insert '@' kdState.pathToEntrance
+                        in
+                        newKd
+                            |> Dict.foldl
+                                (\kd2 path arr ->
+                                    Array.set (Char.toCode kd2) path arr
+                                )
+                                kdState.shortestPath
+                }
+            )
 
 
 type alias State1 =
@@ -155,6 +187,7 @@ findEntrance =
 -- add unsafe points
 -- move normally
 -- fix unsafe points
+-- RECURSION
 
 
 type alias Accumulator =
@@ -177,12 +210,12 @@ findCandidates state1 =
 
 
 type alias InProgressState =
-    { state1 : State1, accumulator : Accumulator, length : Int }
+    { from : Char, state1 : State1, accumulator : Accumulator, length : Int, done : Bool }
 
 
-type RecursionResult
-    = InProgress InProgressState
-    | Done InProgressState
+type RecursionResult inProgress done
+    = InProgress inProgress
+    | Done done
 
 
 type alias RecursionAccumulator =
@@ -190,59 +223,77 @@ type alias RecursionAccumulator =
     }
 
 
-startRecursion : State1 -> RecursionAccumulator
+startRecursion : State1 -> InProgressState
 startRecursion state1 =
-    recursion [ { state1 = state1, accumulator = [], length = 0 } ] { shortestSoFar = Nothing }
+    recursion 0 (PQ.singleton { from = '@', state1 = state1, accumulator = [], length = 0, done = False } 0)
 
 
-recursion : List InProgressState -> RecursionAccumulator -> RecursionAccumulator
-recursion states recAcc =
-    case states of
-        [] ->
-            recAcc
 
-        recState :: rest ->
+--3856
+
+
+recursion : Int -> PQ.PriorityQueue InProgressState -> InProgressState
+recursion count pq =
+    case PQ.isEmpty pq of
+        Nothing ->
+            Helpers.crash "recursion" ""
+
+        Just res ->
             let
-                ( newStates, newRecAcc ) =
-                    recState
-                        |> stepR
-                        |> List.foldl
-                            (\r ( newS, newR ) ->
-                                case r of
-                                    Done acc ->
-                                        ( newS
-                                        , RecursionAccumulator <|
-                                            case newR.shortestSoFar of
-                                                Nothing ->
-                                                    Just acc |> Debug.log "shortest"
+                ( recState, newq ) =
+                    PQ.pop res
 
-                                                Just acc2 ->
-                                                    Just <|
-                                                        if acc.length < acc2.length then
-                                                            acc |> Debug.log "shortest"
-
-                                                        else
-                                                            acc2
-                                        )
-
-                                    InProgress ip ->
-                                        case newR.shortestSoFar of
-                                            Nothing ->
-                                                ( ip :: newS, newR )
-
-                                            Just ir ->
-                                                if ir.length <= ip.length then
-                                                    ( newS, newR )
-
-                                                else
-                                                    ( ip :: newS, newR )
-                            )
-                            ( rest, recAcc )
+                _ =
+                    Helpers.logIf "count" count (count |> modBy 1000 |> (==) 0)
             in
-            recursion newStates newRecAcc
+            if recState.done then
+                recState
+
+            else
+                let
+                    foldRes =
+                        recState
+                            |> stepR
+                            |> List.foldl
+                                (\x -> PQ.push x x.length)
+                                --                                (\r npq ->
+                                --                                    case r of
+                                --                                        Done acc ->
+                                --                                            --                                                ( newS
+                                --                                            --                                                , RecursionAccumulator <|
+                                --                                            --                                                    case newR.shortestSoFar of
+                                --                                            --                                                        Nothing ->
+                                --                                            --                                                            Just acc |> Debug.log "shortest"
+                                --                                            --
+                                --                                            --                                                        Just acc2 ->
+                                --                                            --                                                            Just <|
+                                --                                            --                                                                if acc.length < acc2.length then
+                                --                                            --                                                                    Debug.log "shortest" acc.length |> (\_ -> acc)
+                                --                                            --
+                                --                                            --                                                                else
+                                --                                            --                                                                    acc2
+                                --                                            --                                                )
+                                --                                            npq |> PQ.push acc
+                                --
+                                --                                        InProgress ip ->
+                                --                                            npq |> PQ.push ip
+                                --                                 --                                                case newR.shortestSoFar of
+                                --                                 --                                                    Nothing ->
+                                --                                 --                                                        ( ip :: newS, newR )
+                                --                                 --
+                                --                                 --                                                    Just ir ->
+                                --                                 --                                                        if ir.length <= ip.length then
+                                --                                 --                                                            ( newS, newR )
+                                --                                 --
+                                --                                 --                                                        else
+                                --                                 --                                                            ( ip :: newS, newR )
+                                --                                )
+                                newq
+                in
+                recursion (count + 1) foldRes
 
 
-stepR : InProgressState -> List RecursionResult
+stepR : InProgressState -> List InProgressState
 stepR inProgressState =
     let
         candidates =
@@ -252,8 +303,8 @@ stepR inProgressState =
         |> List.map (step inProgressState)
 
 
-step : InProgressState -> ( Char, KeyDoorState ) -> RecursionResult
-step { state1, accumulator, length } ( key, keyDoorState ) =
+step : InProgressState -> ( Char, KeyDoorState ) -> InProgressState
+step { state1, accumulator, length, from } ( key, keyDoorState ) =
     let
         newState1 : State1
         newState1 =
@@ -265,27 +316,28 @@ step { state1, accumulator, length } ( key, keyDoorState ) =
                         |> Dict.map
                             (\_ kd ->
                                 { kd
-                                    | path = movePath state1.unsafePositions keyDoorState.path kd.path
-                                    , blockers = kd.blockers |> Set.remove (Char.toUpper key) |> Set.remove key
+                                    | blockers = kd.blockers |> Set.remove (Char.toUpper key) |> Set.remove key
                                 }
                             )
             }
 
+        path =
+            keyDoorState.shortestPath |> Helpers.uG (Char.toCode from)
+
         newAccumulator : Accumulator
         newAccumulator =
-            accumulate key keyDoorState.path accumulator
+            accumulate key path accumulator
 
         newLength =
-            length + (List.length keyDoorState.path - 1)
+            length + (List.length path - 1)
+
+        newDone =
+            newState1.blocking |> Dict.isEmpty
 
         newInProgressState =
-            { state1 = newState1, accumulator = newAccumulator, length = newLength }
+            { state1 = newState1, accumulator = newAccumulator, length = newLength, from = key, done = newDone }
     in
-    if newState1.blocking |> Dict.isEmpty then
-        Done newInProgressState
-
-    else
-        InProgress newInProgressState
+    newInProgressState
 
 
 movePath : UnsafePositions -> Path -> Path -> Path
@@ -326,8 +378,9 @@ movePathHelper from other =
         fromFirst :: fromRest ->
             case other of
                 [] ->
-                    Helpers.crash "from longer than other" ( from, [] )
+                    F from []
 
+                --                    Helpers.crash "from longer than other" ( from, [] )
                 otherFirst :: otherRest ->
                     if fromFirst == otherFirst then
                         case movePathHelper fromRest otherRest of
@@ -416,17 +469,6 @@ fixUnsafes { first, last, before, rest } =
         Nothing
 
 
-
---fixUnsafesHelper : Q.Queue Path -> Position -> Visited -> Board -> Path
---fixUnsafesHelper queue end board =
---    if queue |> Q.isEmpty then
---        Helpers.crash "empty queue for fix unsafes" end
---    else
---        let
---            (v, newq) = Q.pop queue
---        in
-
-
 addGrid : String -> String
 addGrid s =
     let
@@ -447,12 +489,7 @@ addGrid s =
 
 
 
---shortestPath : RecursionAccumulator -> ( Accumulator, Int )
---shortestPath recursionAccumulator =
---    recursionAccumulator
---        |> List.map (\acc -> acc |> List.map (Tuple.second >> List.length >> (-) 1 >> abs) |> List.sum |> Tuple.pair (List.reverse acc))
---        |> List.sortBy Tuple.second
---        |> Helpers.at 0
+-- RESULTS
 
 
 result1 : String -> Helpers.Main -> Helpers.Main
@@ -465,10 +502,18 @@ result1 s =
             findEntrance s
 
         ( blocking, unsafePositions ) =
-            getBlocking board Set.empty Dict.empty Set.empty (Q.singleton ( { blockers = Set.empty, path = [] }, entrance ))
+            getBlocking
+                board
+                Set.empty
+                Dict.empty
+                Set.empty
+                (Q.singleton ( { blockers = Set.empty, pathToEntrance = [], shortestPath = Array.empty }, entrance ))
+
+        newBlocking =
+            shortestPaths unsafePositions blocking
 
         state =
-            State1 entrance blocking board unsafePositions
+            State1 entrance newBlocking board unsafePositions
 
         results =
             startRecursion state
@@ -478,8 +523,8 @@ result1 s =
     in
     identity
         >> Helpers.addMultiline (addGrid s)
-        >> Helpers.addToMain state
-        >> Helpers.addToMain results
+        --        >> Helpers.addToMain state
+        >> Helpers.addToMain results.length
 
 
 
@@ -534,9 +579,9 @@ test t f =
 
             Test1 ->
                 """#######
-#a....#
+#a...b#
 ##.@.##
-#c....#
+#c...d#
 #######"""
 
             Test81 ->
