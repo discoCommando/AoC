@@ -1,4 +1,4 @@
-module PriorityQueue exposing (PriorityQueue, isEmpty, pop, push, singleton)
+module PriorityQueue exposing (PriorityQueue, empty, isEmpty, pop, push, singleton)
 
 --import Dict exposing (Dict)
 
@@ -79,61 +79,6 @@ singleton a i =
     Node { rank = 1, value = Value a i, left = Empty, right = Empty }
 
 
-
---type alias PriorityQueue a =
---    { q : Dict Int (List a), f : a -> Int, smallest : List Int }
---
---
---singleton : a -> (a -> Int) -> PriorityQueue a
---singleton a f =
---    PriorityQueue (Dict.empty |> Dict.insert (f a) [ a ]) f [ f a ]
---
---
---push : a -> PriorityQueue a -> PriorityQueue a
---push a p =
---    { p
---        | q =
---            p.q
---                |> Dict.update (p.f a)
---                    (\ml ->
---                        case ml of
---                            Nothing ->
---                                Just [ a ]
---
---                            Just l ->
---                                Just (l ++ [ a ])
---                    )
---    }
---
---
---pushHelper : (a -> Int) -> a -> List a -> List a
---pushHelper f a l =
---    case l of
---        [] ->
---            [ a ]
---
---        first :: rest ->
---            if f a < f first then
---                a :: first :: rest
---
---            else
---                first :: pushHelper f a rest
---
---
---type IsEmpty a
---    = IsEmpty ( a, PriorityQueue a )
---
---
---isEmpty : PriorityQueue a -> Maybe (IsEmpty a)
---isEmpty pq =
---    case Dict.isEmpty pq.q of
---        True ->
---            Nothing
---
---        False ->
---            Just (IsEmpty ( first, { pq | q = rest } ))
---
---
---pop : IsEmpty a -> ( a, PriorityQueue a )
---pop (IsEmpty ( head, rest )) =
---    ( head, rest )
+empty : PriorityQueue a
+empty =
+    Empty
