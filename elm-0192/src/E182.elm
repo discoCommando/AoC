@@ -49,7 +49,7 @@ blockss keydoors key blocks =
 
 
 type alias Cell =
-    { keyDoor : Char, visited : Set Char, length : Int, trace : String, previous : Position }
+    { keyDoor : Char, length : Int, previous : Position, keyDoors : E18.KeyDoors, visited : Set Char }
 
 
 type alias PriorityQueue =
@@ -61,7 +61,7 @@ type alias LensState =
 
 
 type alias State2 =
-    { lens : Dict String LensState
+    { visited : Set ( List Char, Char )
     , priorityQueue : PriorityQueue
     , keyDoors : E18.KeyDoors
     }
@@ -75,44 +75,49 @@ toS chars =
 init : E18.KeyDoors -> State2
 init keyDoors =
     { keyDoors = keyDoors
-    , lens = Dict.empty |> Dict.insert "@" { length = 0, trace = "@" }
-    , priorityQueue = PQ.singleton { keyDoor = '@', visited = Set.empty, length = 0, trace = "", previous = Position -1 -1 } 0
+    , visited = Set.empty
+    , priorityQueue = PQ.singleton { keyDoor = '@', length = 0, previous = Position -1 -1, keyDoors = keyDoors, visited = Set.empty } 0
     }
 
 
-recurse : Set Char -> State2 -> State2
-recurse allKeys state2 =
+recurse : Int -> E18.ShortestPaths -> State2 -> Int
+recurse count shortestPaths state2 =
     case PQ.isEmpty state2.priorityQueue of
         Nothing ->
-            state2
+            0
 
         Just x ->
             let
                 ( cell, qq ) =
                     PQ.pop x
+
+                setKey =
+                    ( cell.visited |> Set.toList, cell.keyDoor )
             in
-            if cell.visited == allKeys then
-                state2
+            if Dict.isEmpty cell.keyDoors then
+                let
+                    _ =
+                        Debug.log "count" count
+                in
+                cell.length
+
+            else if state2.visited |> Set.member setKey then
+                recurse (count + 1) shortestPaths { state2 | priorityQueue = qq }
 
             else
                 let
                     neighbours =
-                        getNeighbours cell state2.keyDoors
-                            |> (\nnn ->
-                                    nnn
-                               )
+                        getNeighbours shortestPaths cell
 
-                    ( newLens, newq ) =
+                    newq =
                         neighbours
                             |> List.foldl
-                                (\( ch, kds ) ( lenss, qqq ) ->
+                                (\( ch, kds ) qqq ->
                                     let
-                                        stringPath =
-                                            toS (Set.insert ch cell.visited)
-
                                         shortestPath =
-                                            kds.shortestPath
-                                                |> Helpers.uG (Char.toCode cell.keyDoor)
+                                            shortestPaths
+                                                |> Dict.get ( ch, cell.keyDoor )
+                                                |> Helpers.uM
 
                                         weight =
                                             shortestPath
@@ -122,67 +127,79 @@ recurse allKeys state2 =
                                             Helpers.at 1 shortestPath
 
                                         len =
-                                            cell.length + (weight - 1)
+                                            cell.length
+                                                + (weight - 1)
 
-                                        trace =
-                                            cell.trace ++ String.fromList [ ch ]
+                                        --                                                |> Debug.log "len"
+                                        visited =
+                                            cell.visited |> Set.insert ch
 
-                                        --
-                                        --                                        qValue =
-                                        --                                            cell.qValue + weight * 4 - 1500
+                                        nqq : PriorityQueue
                                         nqq =
                                             PQ.push
                                                 { keyDoor = ch
-                                                , visited = cell.visited |> Set.insert ch
                                                 , length = len
-                                                , trace = trace
-                                                , qValue = qValue
+                                                , previous = previous
+                                                , keyDoors =
+                                                    cell.keyDoors
+                                                        |> Dict.remove ch
+                                                        |> Dict.remove (Char.toUpper ch)
+                                                        |> Dict.map (\k kds_ -> { kds_ | blockers = kds_.blockers |> Set.remove ch |> Set.remove (Char.toUpper ch) })
+                                                , visited = visited
                                                 }
-                                                qValue
+                                                len
                                                 qqq
-
-                                        add _ =
-                                            lenss |> Dict.insert stringPath { length = len, trace = trace }
                                     in
-                                    ( case Dict.get stringPath state2.lens of
-                                        Just { length } ->
-                                            if length >= len then
-                                                add ()
-
-                                            else
-                                                --                                            ( lenss, qqq )
-                                                lenss
-
-                                        Nothing ->
-                                            add ()
-                                    , nqq
-                                    )
+                                    nqq
                                 )
-                                ( state2.lens, qq )
+                                qq
                 in
-                recurse allKeys { state2 | priorityQueue = newq, lens = newLens }
+                recurse (count + 1) shortestPaths { state2 | priorityQueue = newq, visited = state2.visited |> Set.insert setKey }
 
 
-getNeighbours : Cell -> E18.KeyDoors -> List ( Char, E18.KeyDoorState )
-getNeighbours cell keyDoors =
+getNeighbours : E18.ShortestPaths -> Cell -> List ( Char, E18.KeyDoorState )
+getNeighbours shortestPaths cell =
     let
-        withoutVisited =
-            keyDoors
-                |> Dict.filter (\k _ -> k |> Char.isLower)
-                |> Dict.filter (\k _ -> cell.visited |> Set.member k |> not)
+        withNoBlocking =
+            cell.keyDoors
                 |> Dict.filter
                     (\k kds ->
-                        Set.diff (Set.diff kds.blockers cell.visited)
-                            (cell.visited |> Set.map Char.toUpper)
-                            --                    |> Debug.log (( cell.visited, cell.keyDoor, k ) |> Debug.toString)
-                            |> Set.isEmpty
+                        Char.isLower k
+                            && Set.isEmpty kds.blockers
                     )
 
         withoutGoingBack =
-            withoutVisited
+            withNoBlocking
+                |> Dict.filter
+                    (\k kds ->
+                        let
+                            shortestPath =
+                                shortestPaths
+                                    |> Dict.get ( k, cell.keyDoor )
+                                    |> Helpers.uM
+
+                            --                                    |> Debug.log (Debug.toString ( "shortest", cell, k ))
+                            newPrevious =
+                                shortestPath
+                                    |> Helpers.at 1
+
+                            --                                    |> Debug.log (Debug.toString ( "newPrevious", cell.previous, k ))
+                        in
+                        newPrevious /= cell.previous
+                    )
 
         result =
-            withoutGoingBack
+            if Dict.isEmpty withoutGoingBack then
+                withNoBlocking
+
+            else
+                --                let
+                --                    _ =
+                --                        Debug.log (Debug.toString cell.keyDoor) { from = withNoBlocking |> Dict.keys, to = withoutGoingBack |> Dict.keys }
+                --                in
+                withoutGoingBack
+
+        --                    |> Debug.log (Debug.toString cell)
     in
     result |> Dict.toList
 
@@ -210,7 +227,6 @@ result1 s =
                 (Q.singleton
                     ( { blockers = Set.empty
                       , pathToEntrance = []
-                      , shortestPath = Array.empty
                       , point = Position 0 0
                       , level = 0
                       }
@@ -218,25 +234,20 @@ result1 s =
                     )
                 )
 
-        newBlocking =
+        shortestPaths =
             E18.shortestPaths unsafePositions blocking
 
-        blocks =
-            newBlocking
-                |> Dict.keys
-                |> List.foldl (\ch -> blockss newBlocking ch >> Tuple.second) Dict.empty
-                |> Dict.toList
-                |> List.sortBy (Tuple.second >> Set.size)
-
-        allKeys =
-            blocking |> Dict.keys |> List.map Char.toLower |> Set.fromList
-
+        --        blocks =
+        --            newBlocking
+        --                |> Dict.keys
+        --                |> List.foldl (\ch -> blockss newBlocking ch >> Tuple.second) Dict.empty
+        --                |> Dict.toList
+        --                |> List.sortBy (Tuple.second >> Set.size)
         state2 =
-            init newBlocking |> recurse allKeys
+            init blocking |> recurse 0 shortestPaths
 
-        shortest =
-            state2.lens |> Dict.get (toS allKeys) |> Helpers.uM |> .length
-
+        --        shortest =
+        --            state2.lens |> Dict.get (toS allKeys) |> Helpers.uM |> .length
         --        state =
         --            State1 entrance newBlocking board unsafePositions
         --
@@ -246,16 +257,20 @@ result1 s =
         --            shortestPath results
     in
     identity
-        >> Helpers.addMultiline (E18.addGrid s)
-        --        >> Helpers.addToMain state
-        --        >> Helpers.addToMain (newBlocking |> Dict.map (\_ kd -> kd.point))
-        --        >> Helpers.addToMain (newBlocking |> Dict.keys)
-        --        >> Helpers.addToMain blocks
-        >> Helpers.addToMain shortest
+        --        >> Helpers.addMultiline (E18.addGrid s)
+        >> Helpers.addToMain state2
+
+
+
+--        >> Helpers.addToMain (newBlocking |> Dict.map (\_ kd -> kd.point))
+--        >> Helpers.addToMain (newBlocking |> Dict.keys)
+--        >> Helpers.addToMain blocks
+--        >> Helpers.addToMain shortest
 
 
 main =
     Helpers.initMain
+        --        |> result1 (E18.test E18.Test81 identity)
         |> result1 (E18.test E18.Main identity)
         --        |> Helpers.addToMain result2
         |> Helpers.makeMain2

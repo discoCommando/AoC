@@ -30,7 +30,6 @@ type alias KeyDoorState =
     { blockers : Set Char
     , pathToEntrance : Path
     , point : Position
-    , shortestPath : Array Path
     , level : Int
     }
 
@@ -72,7 +71,6 @@ getBlocking board visited blocking unsafePositions queue =
                                         { blockers = blockers
                                         , pathToEntrance = newPath |> List.reverse
                                         , point = Helpers.at 0 newPath
-                                        , shortestPath = Array.initialize 200 (\_ -> [])
                                         , level = 0
                                         }
                                 )
@@ -98,7 +96,6 @@ getBlocking board visited blocking unsafePositions queue =
                             Q.push
                                 ( { blockers = newBlockers
                                   , pathToEntrance = newPath
-                                  , shortestPath = Array.empty
                                   , point = Position 0 0
                                   , level = 0
                                   }
@@ -109,35 +106,32 @@ getBlocking board visited blocking unsafePositions queue =
                 )
 
 
-shortestPaths : UnsafePositions -> KeyDoors -> KeyDoors
+type alias ShortestPaths =
+    Dict ( Char, Char ) Path
+
+
+shortestPaths : UnsafePositions -> KeyDoors -> ShortestPaths
 shortestPaths unsafePositions keyDoors =
     keyDoors
         |> Dict.map
             (\kd kdState ->
-                { kdState
-                    | shortestPath =
-                        let
-                            newKd =
-                                keyDoors
-                                    |> Dict.map
-                                        (\kd2 kdState2 ->
-                                            if kd == kd2 then
-                                                []
+                let
+                    newKd =
+                        keyDoors
+                            |> Dict.map
+                                (\kd2 kdState2 ->
+                                    if kd == kd2 then
+                                        []
 
-                                            else
-                                                movePath unsafePositions kdState.pathToEntrance kdState2.pathToEntrance
-                                                    |> List.reverse
-                                        )
-                                    |> Dict.insert '@' kdState.pathToEntrance
-                        in
-                        newKd
-                            |> Dict.foldl
-                                (\kd2 path arr ->
-                                    Array.set (Char.toCode kd2) path arr
+                                    else
+                                        movePath unsafePositions kdState.pathToEntrance kdState2.pathToEntrance
+                                            |> List.reverse
                                 )
-                                kdState.shortestPath
-                }
+                            |> Dict.insert '@' (kdState.pathToEntrance |> List.reverse)
+                in
+                newKd
             )
+        |> Dict.foldl (\k v dd -> Dict.foldl (\k2 p dd2 -> dd2 |> Dict.insert ( k, k2 ) p) dd v) Dict.empty
 
 
 type alias State1 =
@@ -249,89 +243,82 @@ type alias RecursionAccumulator =
     }
 
 
-startRecursion : State1 -> InProgressState
-startRecursion state1 =
-    recursion 0 (PQ.singleton { from = '@', state1 = state1, accumulator = [], length = 0, done = False } 0)
 
-
-
+--startRecursion : State1 -> InProgressState
+--startRecursion state1 =
+--    recursion 0 (PQ.singleton { from = '@', state1 = state1, accumulator = [], length = 0, done = False } 0)
 --3856
-
-
-recursion : Int -> PQ.PriorityQueue InProgressState -> InProgressState
-recursion count pq =
-    case PQ.isEmpty pq of
-        Nothing ->
-            Helpers.crash "recursion" ""
-
-        Just res ->
-            let
-                ( recState, newq ) =
-                    PQ.pop res
-
-                _ =
-                    Helpers.logIf "count" count (count |> modBy 1000 |> (==) 0)
-            in
-            if recState.done then
-                recState
-
-            else
-                let
-                    foldRes =
-                        recState
-                            |> stepR
-                            |> List.foldl
-                                (\x -> PQ.push x x.length)
-                                newq
-                in
-                recursion (count + 1) foldRes
-
-
-stepR : InProgressState -> List InProgressState
-stepR inProgressState =
-    let
-        candidates =
-            findCandidates inProgressState.state1
-    in
-    candidates
-        |> List.map (step inProgressState)
-
-
-step : InProgressState -> ( Char, KeyDoorState ) -> InProgressState
-step { state1, accumulator, length, from } ( key, keyDoorState ) =
-    let
-        newState1 : State1
-        newState1 =
-            { state1
-                | blocking =
-                    state1.blocking
-                        |> Dict.remove key
-                        |> Dict.remove (Char.toUpper key)
-                        |> Dict.map
-                            (\_ kd ->
-                                { kd
-                                    | blockers = kd.blockers |> Set.remove (Char.toUpper key) |> Set.remove key
-                                }
-                            )
-            }
-
-        path =
-            keyDoorState.shortestPath |> Helpers.uG (Char.toCode from)
-
-        newAccumulator : Accumulator
-        newAccumulator =
-            accumulate key path accumulator
-
-        newLength =
-            length + (List.length path - 1)
-
-        newDone =
-            newState1.blocking |> Dict.isEmpty
-
-        newInProgressState =
-            { state1 = newState1, accumulator = newAccumulator, length = newLength, from = key, done = newDone }
-    in
-    newInProgressState
+--recursion : Int -> PQ.PriorityQueue InProgressState -> InProgressState
+--recursion count pq =
+--    case PQ.isEmpty pq of
+--        Nothing ->
+--            Helpers.crash "recursion" ""
+--
+--        Just res ->
+--            let
+--                ( recState, newq ) =
+--                    PQ.pop res
+--
+--                _ =
+--                    Helpers.logIf "count" count (count |> modBy 1000 |> (==) 0)
+--            in
+--            if recState.done then
+--                recState
+--
+--            else
+--                let
+--                    foldRes =
+--                        recState
+--                            |> stepR
+--                            |> List.foldl
+--                                (\x -> PQ.push x x.length)
+--                                newq
+--                in
+--                recursion (count + 1) foldRes
+--stepR : InProgressState -> List InProgressState
+--stepR inProgressState =
+--    let
+--        candidates =
+--            findCandidates inProgressState.state1
+--    in
+--    candidates
+--        |> List.map (step inProgressState)
+--step : InProgressState -> ( Char, KeyDoorState ) -> InProgressState
+--step { state1, accumulator, length, from } ( key, keyDoorState ) =
+--    let
+--        newState1 : State1
+--        newState1 =
+--            { state1
+--                | blocking =
+--                    state1.blocking
+--                        |> Dict.remove key
+--                        |> Dict.remove (Char.toUpper key)
+--                        |> Dict.map
+--                            (\_ kd ->
+--                                { kd
+--                                    | blockers = kd.blockers |> Set.remove (Char.toUpper key) |> Set.remove key
+--                                }
+--                            )
+--            }
+--
+--        path =
+--            keyDoorState.shortestPath |> Dict.get from |> Helpers.uM
+--
+--        newAccumulator : Accumulator
+--        newAccumulator =
+--            accumulate key path accumulator
+--
+--        newLength =
+--            length + (List.length path - 1)
+--
+--        newDone =
+--            newState1.blocking |> Dict.isEmpty
+--
+--        newInProgressState =
+--            { state1 = newState1, accumulator = newAccumulator, length = newLength, from = key, done = newDone }
+--    in
+--    newInProgressState
+--
 
 
 movePath : UnsafePositions -> Path -> Path -> Path
@@ -484,54 +471,52 @@ addGrid s =
 
 
 -- RESULTS
-
-
-result1 : String -> Helpers.Main -> Helpers.Main
-result1 s =
-    let
-        board =
-            init s
-
-        entrance =
-            findEntrance s
-
-        ( blocking, unsafePositions ) =
-            getBlocking
-                board
-                Set.empty
-                Dict.empty
-                Set.empty
-                (Q.singleton
-                    ( { blockers = Set.empty
-                      , pathToEntrance = []
-                      , shortestPath = Array.empty
-                      , point = Position 0 0
-                      , level = 0
-                      }
-                    , entrance
-                    )
-                )
-
-        newBlocking =
-            shortestPaths unsafePositions blocking
-
-        state =
-            State1 entrance newBlocking board unsafePositions
-
-        results =
-            startRecursion state
-
-        --        shortest =
-        --            shortestPath results
-    in
-    identity
-        >> Helpers.addMultiline (addGrid s)
-        --        >> Helpers.addToMain state
-        >> Helpers.addToMain results.length
-
-
-
---        >> Helpers.addToMain shortest
+--result1 : String -> Helpers.Main -> Helpers.Main
+--result1 s =
+--    let
+--        board =
+--            init s
+--
+--        entrance =
+--            findEntrance s
+--
+--        ( blocking, unsafePositions ) =
+--            getBlocking
+--                board
+--                Set.empty
+--                Dict.empty
+--                Set.empty
+--                (Q.singleton
+--                    ( { blockers = Set.empty
+--                      , pathToEntrance = []
+--                      , shortestPath = Dict.empty
+--                      , point = Position 0 0
+--                      , level = 0
+--                      }
+--                    , entrance
+--                    )
+--                )
+--
+--        newBlocking =
+--            shortestPaths unsafePositions blocking
+--
+--        state =
+--            State1 entrance newBlocking board unsafePositions
+--
+--        results =
+--            startRecursion state
+--
+--        --        shortest =
+--        --            shortestPath results
+--    in
+--    identity
+--        >> Helpers.addMultiline (addGrid s)
+--        --        >> Helpers.addToMain state
+--        >> Helpers.addToMain results.length
+--
+--
+--
+----        >> Helpers.addToMain shortest
 
 
 result2 =
@@ -540,7 +525,7 @@ result2 =
 
 main =
     Helpers.initMain
-        |> result1 (test Main identity)
+        --        |> result1 (test Main identity)
         |> Helpers.addToMain result2
         |> Helpers.makeMain2
 
@@ -550,6 +535,7 @@ type Test
     | Simple
     | Normal
     | Trivial
+    | Trivial2
     | Test1
     | Test81
 
@@ -579,6 +565,11 @@ test t f =
                 """#########
 #b.A.@.a#
 #########"""
+
+            Trivial2 ->
+                """###########
+#b.A.@.a.c#
+###########"""
 
             Test1 ->
                 """#######
