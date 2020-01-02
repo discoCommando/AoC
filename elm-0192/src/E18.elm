@@ -110,8 +110,8 @@ type alias ShortestPaths =
     Dict ( Char, Char ) Path
 
 
-shortestPaths : UnsafePositions -> KeyDoors -> ShortestPaths
-shortestPaths unsafePositions keyDoors =
+getShortestPath : UnsafePositions -> KeyDoors -> ShortestPaths
+getShortestPath unsafePositions keyDoors =
     keyDoors
         |> Dict.map
             (\kd kdState ->
@@ -151,23 +151,6 @@ type alias Board =
     ABoard Cell
 
 
-
-{-
-   1. get dict from key/door to which door is blocking it
-   2. recursion
-       if all doors opened
-           return something
-       if not
-           get all available doors
-               try out recursively
-
-   problems:
-       somehow we need to have the way to get all available doors
-           dict door/key (blocking doors)
-       in each cycle of the function u have to be able to get the path to each step quickly (o(1))
--}
-
-
 init : String -> Board
 init =
     Board.init
@@ -187,8 +170,8 @@ init =
         )
 
 
-findEntrance : String -> Position
-findEntrance =
+findEntrances : String -> List Position
+findEntrances =
     Board.init
         (\c ->
             case c of
@@ -199,126 +182,7 @@ findEntrance =
                     False
         )
         >> find ((==) True)
-        >> Helpers.at 0
-        >> Tuple.first
-
-
-
--- add unsafe points
--- move normally
--- fix unsafe points
--- RECURSION
-
-
-type alias Accumulator =
-    List ( Char, Path )
-
-
-accumulate : Char -> Path -> Accumulator -> Accumulator
-accumulate key path acc =
-    ( key, path ) :: acc
-
-
-findCandidates : State1 -> List ( Char, KeyDoorState )
-findCandidates state1 =
-    state1.blocking
-        |> Dict.filter
-            (\key v ->
-                isKey key && Set.isEmpty v.blockers
-            )
-        |> Dict.toList
-
-
-type alias InProgressState =
-    { from : Char, state1 : State1, accumulator : Accumulator, length : Int, done : Bool }
-
-
-type RecursionResult inProgress done
-    = InProgress inProgress
-    | Done done
-
-
-type alias RecursionAccumulator =
-    { shortestSoFar : Maybe InProgressState
-    }
-
-
-
---startRecursion : State1 -> InProgressState
---startRecursion state1 =
---    recursion 0 (PQ.singleton { from = '@', state1 = state1, accumulator = [], length = 0, done = False } 0)
---3856
---recursion : Int -> PQ.PriorityQueue InProgressState -> InProgressState
---recursion count pq =
---    case PQ.isEmpty pq of
---        Nothing ->
---            Helpers.crash "recursion" ""
---
---        Just res ->
---            let
---                ( recState, newq ) =
---                    PQ.pop res
---
---                _ =
---                    Helpers.logIf "count" count (count |> modBy 1000 |> (==) 0)
---            in
---            if recState.done then
---                recState
---
---            else
---                let
---                    foldRes =
---                        recState
---                            |> stepR
---                            |> List.foldl
---                                (\x -> PQ.push x x.length)
---                                newq
---                in
---                recursion (count + 1) foldRes
---stepR : InProgressState -> List InProgressState
---stepR inProgressState =
---    let
---        candidates =
---            findCandidates inProgressState.state1
---    in
---    candidates
---        |> List.map (step inProgressState)
---step : InProgressState -> ( Char, KeyDoorState ) -> InProgressState
---step { state1, accumulator, length, from } ( key, keyDoorState ) =
---    let
---        newState1 : State1
---        newState1 =
---            { state1
---                | blocking =
---                    state1.blocking
---                        |> Dict.remove key
---                        |> Dict.remove (Char.toUpper key)
---                        |> Dict.map
---                            (\_ kd ->
---                                { kd
---                                    | blockers = kd.blockers |> Set.remove (Char.toUpper key) |> Set.remove key
---                                }
---                            )
---            }
---
---        path =
---            keyDoorState.shortestPath |> Dict.get from |> Helpers.uM
---
---        newAccumulator : Accumulator
---        newAccumulator =
---            accumulate key path accumulator
---
---        newLength =
---            length + (List.length path - 1)
---
---        newDone =
---            newState1.blocking |> Dict.isEmpty
---
---        newInProgressState =
---            { state1 = newState1, accumulator = newAccumulator, length = newLength, from = key, done = newDone }
---    in
---    newInProgressState
---
+        >> List.map Tuple.first
 
 
 movePath : UnsafePositions -> Path -> Path -> Path
@@ -469,64 +333,229 @@ addGrid s =
         |> String.join "\n"
 
 
-
--- RESULTS
---result1 : String -> Helpers.Main -> Helpers.Main
---result1 s =
---    let
---        board =
---            init s
---
---        entrance =
---            findEntrance s
---
---        ( blocking, unsafePositions ) =
---            getBlocking
---                board
---                Set.empty
---                Dict.empty
---                Set.empty
---                (Q.singleton
---                    ( { blockers = Set.empty
---                      , pathToEntrance = []
---                      , shortestPath = Dict.empty
---                      , point = Position 0 0
---                      , level = 0
---                      }
---                    , entrance
---                    )
---                )
---
---        newBlocking =
---            shortestPaths unsafePositions blocking
---
---        state =
---            State1 entrance newBlocking board unsafePositions
---
---        results =
---            startRecursion state
---
---        --        shortest =
---        --            shortestPath results
---    in
---    identity
---        >> Helpers.addMultiline (addGrid s)
---        --        >> Helpers.addToMain state
---        >> Helpers.addToMain results.length
---
---
---
-----        >> Helpers.addToMain shortest
-
-
 result2 =
     ""
 
 
+type alias PQCell =
+    { keyDoor : List Char, length : Int, previous : Position, keyDoors : List KeyDoors, visited : Set Char, boardNo : Int }
+
+
+type alias PriorityQueue =
+    PQ.PriorityQueue PQCell
+
+
+type alias State2 =
+    { visited : Set ( List Char, List Char )
+    , priorityQueue : PriorityQueue
+    }
+
+
+toS : Set Char -> String
+toS chars =
+    chars |> Set.toList |> String.fromList
+
+
+type alias SingleState =
+    { keyDoors : KeyDoors, shortestPaths : ShortestPaths }
+
+
+pqinit : List KeyDoors -> State2
+pqinit keyDoors =
+    { visited = Set.empty
+    , priorityQueue =
+        keyDoors
+            |> List.indexedMap
+                (\i _ ->
+                    { keyDoor = keyDoors |> List.map (\_ -> '@')
+                    , length = 0
+                    , previous = Position -1 -1
+                    , keyDoors = keyDoors
+                    , visited = Set.empty
+                    , boardNo = i
+                    }
+                )
+            |> List.foldl (\x -> PQ.push x 0) PQ.empty
+    }
+
+
+recurse : Int -> ShortestPaths -> State2 -> Int
+recurse count shortestPaths state2 =
+    case PQ.isEmpty state2.priorityQueue of
+        Nothing ->
+            Debug.todo "recurse"
+
+        Just x ->
+            let
+                ( cell, qq ) =
+                    PQ.pop x
+
+                setKey =
+                    ( cell.visited |> Set.toList, cell.keyDoor )
+            in
+            if List.all Dict.isEmpty cell.keyDoors then
+                let
+                    _ =
+                        Debug.log "count" count
+                in
+                cell.length
+
+            else if state2.visited |> Set.member setKey then
+                recurse (count + 1) shortestPaths { state2 | priorityQueue = qq }
+
+            else
+                let
+                    neighbours =
+                        getNeighbours shortestPaths cell
+
+                    newq =
+                        neighbours
+                            |> List.foldl
+                                (\( boardNo, ch ) qqq ->
+                                    let
+                                        cellKeyDoor =
+                                            cell.keyDoor |> Helpers.at boardNo
+
+                                        shortestPath =
+                                            shortestPaths
+                                                |> Dict.get ( ch, cellKeyDoor )
+                                                |> Helpers.uM
+
+                                        weight : Int
+                                        weight =
+                                            shortestPath
+                                                |> List.length
+
+                                        previous =
+                                            Helpers.at 1 shortestPath
+
+                                        len =
+                                            cell.length
+                                                + (weight - 1)
+
+                                        --                                                |> Debug.log "len"
+                                        visited =
+                                            cell.visited |> Set.insert ch
+
+                                        nqq : PriorityQueue
+                                        nqq =
+                                            PQ.push
+                                                { keyDoor = Helpers.replaceAt boardNo (\_ -> ch) cell.keyDoor
+                                                , length = len
+                                                , previous = previous
+                                                , keyDoors =
+                                                    cell.keyDoors
+                                                        |> List.map
+                                                            (\kd ->
+                                                                kd
+                                                                    |> Dict.remove ch
+                                                                    |> Dict.remove (Char.toUpper ch)
+                                                                    |> Dict.map (\k kds_ -> { kds_ | blockers = kds_.blockers |> Set.remove ch |> Set.remove (Char.toUpper ch) })
+                                                            )
+                                                , visited = visited
+                                                , boardNo = boardNo
+                                                }
+                                                len
+                                                qqq
+                                    in
+                                    nqq
+                                )
+                                qq
+                in
+                recurse (count + 1) shortestPaths { state2 | priorityQueue = newq, visited = state2.visited |> Set.insert setKey }
+
+
+getNeighbours : ShortestPaths -> PQCell -> List ( Int, Char )
+getNeighbours shortestPaths cell =
+    let
+        withNoBlocking =
+            cell.keyDoors
+                |> List.map
+                    (Dict.filter
+                        (\k kds ->
+                            Char.isLower k
+                                && Set.isEmpty kds.blockers
+                        )
+                    )
+
+        withoutGoingBack =
+            withNoBlocking
+                |> List.indexedMap
+                    (\i ->
+                        Dict.filter
+                            (\k kds ->
+                                let
+                                    shortestPath =
+                                        shortestPaths
+                                            |> Dict.get ( k, Helpers.at i cell.keyDoor )
+                                            |> Helpers.uM
+
+                                    newPrevious =
+                                        shortestPath
+                                            |> Helpers.at 1
+                                in
+                                newPrevious /= cell.previous
+                            )
+                    )
+
+        result =
+            if List.all Dict.isEmpty withoutGoingBack then
+                withNoBlocking
+
+            else
+                withoutGoingBack
+    in
+    result |> List.indexedMap (\i x -> Dict.keys x |> List.map (Tuple.pair i)) |> List.concat
+
+
+result1 : String -> Helpers.Main -> Helpers.Main
+result1 s =
+    let
+        board =
+            init s
+
+        entrances =
+            findEntrances s
+
+        ( keyDoors, shortestPaths ) =
+            entrances
+                |> List.map
+                    (\entrance ->
+                        getBlocking
+                            board
+                            Set.empty
+                            Dict.empty
+                            Set.empty
+                            (Q.singleton
+                                ( { blockers = Set.empty
+                                  , pathToEntrance = []
+                                  , point = Position 0 0
+                                  , level = 0
+                                  }
+                                , entrance
+                                )
+                            )
+                    )
+                |> List.map
+                    (\( keyDoors_, unsafePositions_ ) ->
+                        { keyDoors = keyDoors_, shortestPaths = getShortestPath unsafePositions_ keyDoors_ }
+                    )
+                |> List.foldl (\ss ( kds, acc ) -> ( kds ++ [ ss.keyDoors ], acc |> Dict.union ss.shortestPaths )) ( [], Dict.empty )
+
+        shortest =
+            pqinit keyDoors |> recurse 0 shortestPaths
+    in
+    identity
+        --        >> Helpers.addMultiline (addGrid s)
+        >> Helpers.addToMain shortest
+
+
 main =
     Helpers.initMain
-        --        |> result1 (test Main identity)
-        |> Helpers.addToMain result2
+        --        |> result1 (test Test81 identity)
+        |> result1 (test Main identity)
+        |> result1 (test Main2 identity)
+        --        |> Helpers.addToMain result2
         |> Helpers.makeMain2
 
 
@@ -538,6 +567,7 @@ type Test
     | Trivial2
     | Test1
     | Test81
+    | Main2
 
 
 test : Test -> (String -> a) -> a
@@ -546,6 +576,9 @@ test t f =
         case t of
             Main ->
                 input
+
+            Main2 ->
+                input2
 
             Normal ->
                 """########################
@@ -630,6 +663,90 @@ input =
 #...#.....#...#...............#.............................#....b..............#
 #######################################.@.#######################################
 #...#.#.........#.....#...........#...........#...#.....#.......#...#.....Q.#...#
+#.#.#.#.#####.###.#.#.#.#####.###.#.###.#.###.#.#.#.###.#.#####.#.#.#.#.###.###.#
+#.#.#.#.#...#.....#.#.#.#.#...#...#...#.#.#.....#.#...#...#.....#.#.#.#...#.#...#
+#.#.#.#.#.#.#######.###.#.#.#####.###.#.#.#######.###.#####.#####.#.#.###.#.#.#.#
+#.#...#.#.#.....#.#.#.B...#.....#.#...#.#.....#.....#.#...#.......#.#.#...#...#.#
+#.#####.#.#####.#.#.#.#######.#.###.###.#.###.###.###.#.#####.#####.#.#.#######.#
+#.#...#q#..f#.....#...#.....#.#...#.#...#.#.#...#.#.....#...#.#...#...#.#.....#.#
+#.#.#.#.#.#.#######.###.###.###.#.#.#.###.#.###.###.#####.#.#.###.#####.#.###.#.#
+#...#.#.#.#...#...#p..#.#.#...#.#...#...#.....#...#.#.....#.#.....#...#...#...#.#
+#####.#.#####.#.#.###.#.#.###.#########.#####.###.#.#.#####.#####.###.#####.###.#
+#.....#.......#.#.#...#.#...#.#.......#.#...#.#.#...#.#...#.....#.....#.#...#.#.#
+#.###########.#.#.#####.###.#L#.#####R#.#.#.#.#.#####.#.#.#####.#####.#.#.###.#.#
+#...........#.#.#.......#...#...#...#...#.#.#.....#...#.#.....#...#...#.#...#...#
+#######.###.#.#.#########.#.#####.#.#######.#####.#.#######.#.###.#.###.###.###.#
+#.......#...#.#.#.........#.......#.....#...#.....#.#.....#.#...#.#...#...#...#.#
+#.#######.###.#.#.###.#################.#.###.#####.#.#.#.###.###.###.###.###.#.#
+#.#.........#.#.#...#.............#.....#.........#.#.#.#.....#...#.#.......#.#.#
+#.###.#######.#.###########.#####.#.###############.###.#####.#.###.#.#####.#.###
+#...#.#.......#.#.........#.#...#.#.#...#.......#...#...#.#...#.#.....#...#.#...#
+#.#G###.#######.#.#######.#.###.#.###.#.#.#####.#.###.###.#.###.#######.#.#####.#
+#.#...#....x#.#.#.#z#.....#.....#.....#.#.....#...#...#...#.#...#.......#.#...#.#
+#.###.#####.#.#.#.#.#########.#########.#####.#######.#.###.#####.#######.#.#.#.#
+#k#.#.....#...#...#.#.....#...#.......#.#...#.#.......#.#...#.....#.#...#...#.#.#
+#.#.#####.###.#####.#.###.#.###.#####.#.#.#.#.#.#.#####.#.###.#####.#.#.#####.#H#
+#.#.....#...#.....#.#...#.#.#...#...#...#.#...#.#.#.....#.#...#...#...#...#.#.#.#
+#.#.###.###.#####.#.###.#.#.#.###.#.###.#.#######.#.###.#.#.###.#.#.###.#Y#.#.#.#
+#...#...#.#...#...#.....#..o#.#.#.#.....#.#.......#.#...#...#...#...#...#...#..g#
+#####.###.#.###.#######.#####.#.#.#######.#####.###.###.#############.#####.###.#
+#...#.#...#.....#.....#.....#.#.#...#...#.......#.....#...#...........#.#...#...#
+#.#.#.###.#######.###.#######.#.###.#.###########.###.###.#.###########.#.###.###
+#.#.#.#.....#.#.....#.#.......#...#.#...#...#...#...#.#...#.......#...#.I.#.#...#
+#.#.#.#.###.#.#.###.#.#.#######.#.#.###.#.###.#.#.###.#.#########.###.#.###.###.#
+#.#.#.#.#...#s....#.#.#.......#a#.#.....#.#...#.#.#...#.....#.....#...#.....#.#.#
+#.###M#U###.#####.#.#.###.###.###.#####.#.#.###.#.#.#.#####.#.#####.#V#####.#.#.#
+#.....#...#...#...#.#...#...#.#...#....n#.#...#d..#.#.#.J.#...#.....#...#..w#.#.#
+#.#######.###.#####.###.#####.#.###.#####.###.#####.#.#.#.###.#####.#####.###.#.#
+#.......#.#.#...#...#.#.....#.#...#.#...#...#.#.#...#.#.#.#...#...#...........#.#
+#######.#.#.###E#.###.#####.#.#.#.#.###.#.###.#.#.#####.#.#####.#.#############.#
+#.........#.......#.........C.#.#.......#.......#.......#.......#...............#
+#################################################################################"""
+
+
+input2 =
+    """#################################################################################
+#.......#...#...#...........#.....#...#.#.....#m......#.......#.....#........u..#
+#####.#.#.#.#.#.###.#######.###.#.#.#.#.#.###.###.#####.#.###.###.#.###########.#
+#.....#...#...#.....#.#.....#...#...#...#.#....e#.......#...#.....#.....#.......#
+#.###################.#.#####.#########.#.#####.###########.###########.#.#######
+#.#...#...#...........#.#.....#.......#.#.....#.....#.....#...#.......#.#.#.....#
+#.#S#.###.#.#####.#####.#.###.#.###.###.#####.#####.#.###.###.#.#.#####.#.#.###.#
+#.#.#...#.#...#.#.......#.#.#.#.#...#...#.D.#.#...#...#.#.#...#.#.#.....#j..#...#
+#.#.###.#.###.#.#########.#.#.###.###.###.#.#.#.#.#####.#.#.###.###.#########.###
+#.#...#.#...#...#.#.........#...#.#...#.#.#...#.#.....#...#...#...#.#.#.....#...#
+#.###.#.###.###.#.#.#########.#.#.#.###.#.#####.#####.#.#####.###.#.#.#.#.#.###.#
+#...#.#c..#.....#.......#...#.#.#.#.#...#...#.....#.#.#.#.....#...#.#...#.#...#.#
+#.###.###.#.#############.#.###.#.#.#.#.###.#####.#.#.#.#.#####.###.#.###.###.#.#
+#.#...#.#.#.........#.....#...#.#.....#.#.#...#.#...#.#...#...#.....#.#...#...K.#
+#.#.###.#.#########.#.#######.#.#########.###.#.###.#.#####.#.#.#######.#########
+#.......#.#.......#h..#.....#.#.........#...#.#.....#.......#...#.....#.#...#...#
+#.#######.#O#####.#######.#.#.#.#######.###.#.#.#######.#######.#.###F#.#.#.#.#.#
+#.#....y..#...#...#.....#.#.#.#.#.#.....#...#.#.#.....#.#.....#...#.#.#...#.#.#.#
+###.#####.###.#.###.###.#.###.#.#.#.###.#.#.#.###.###.#.#.###.#####.#.#.###.#.#.#
+#...#.....#.#.#...#.#.Z.#...#.#.#.#.#...#.#.#.....#.#.#.#.#.#...#.....#...#...#.#
+#.###.#####.#.###A#.#.###.#.#.#.#.#.#####.#########.#.#.#.#.###.#.#########.###.#
+#.#.#.#.....#.#.#...#.#...#...#...#.....#.#.........#.#.#.#.#...#.#.......#.#...#
+#.#.#.#####.#.#.#######.#########.#####.#.#.#####.#.#.#.#.#.#####.#.###.#.###.#.#
+#.#.#...#...#.#...#.....#.....#.......#.#.#.#.#...#.#.#.#.#.....#.#.#...#.....#.#
+#.#.###.#.#.#.###.#.#######.#.#####.###.#.#.#.#.#####.#.#.#.#.###.###.#########X#
+#.#...#...#.#...#.#...#.....#.....#.#...#.....#.#...#.#.#.#.#...#...#.....#.....#
+#.#W#.#####.###N#.###.#.#.#######.###.#.#######.#.#.#.###.#.###.###.#####.###.###
+#i#.#.....#.#.#.#...#.#.#.#.....#.....#.#..r..#...#.#...#.#.#.....#.#...#...#.#.#
+#.#######.#.#.#.#.###.###.#.###########.#.###.#.###.###.#.###.#####.#.#.###.#.#.#
+#.......#...#.#.#...#...#.#.............#.#.#.#.#.#...#...#...#.....#.#.....#.#.#
+#.#####.#.###.#.#.#.###.#.#.#############.#.#.#.#.###.#####.###.#####.#######.#.#
+#.#.#...#.....#.#.#...#..t#...#.#.......#.#.#.#...#.....#.....#...#...#.....#.#.#
+#.#.#.#######.#.#.###.#######.#.#.#.#####.#.#.#.###.###.#####.###.###.#.###.#.#.#
+#...#.#...#...#.#...#.....#.#.#...#.....#.#.#.#.#...#.........#.#...#...T.#.#...#
+###.#.#.#.#.###.###.#.###.#.#.#########.#.#.#.###.###########.#.###.#####.#.###.#
+#...#...#.#.#...#...#...#...#.......#...#.#.#...#.#.....#...#...#...#...#.#...#.#
+#.#######.###.###.#####.###########.#.###.#.###.#.#.###.#.#.###.#.###.#.#####.###
+#.#...#v#...#.#.#.....#.........#...#...#.#.......#...#..l#...#.#.....#.....#.P.#
+#.#.#.#.###.#.#.#####.#########.#.#####.#.###########.#######.#############.###.#
+#...#.....#...#...............#........@#@..................#....b..............#
+#################################################################################
+#...#.#.........#.....#...........#....@#@....#...#.....#.......#...#.....Q.#...#
 #.#.#.#.#####.###.#.#.#.#####.###.#.###.#.###.#.#.#.###.#.#####.#.#.#.#.###.###.#
 #.#.#.#.#...#.....#.#.#.#.#...#...#...#.#.#.....#.#...#...#.....#.#.#.#...#.#...#
 #.#.#.#.#.#.#######.###.#.#.#####.###.#.#.#######.###.#####.#####.#.#.###.#.#.#.#
