@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 25a2665814b7ee088b74f7756a1fed84d956120861c02b7a304f6663de597a87
+-- hash: bb6c3294ab358fc4347e77231f7eddf6b162ad12ebe3da988254deef5f90b3b5
 
 name:           aoc2020
 version:        0.1.0.0
@@ -23,6 +23,8 @@ extra-source-files:
 data-files:
     data/00.txt
     data/01.txt
+    data/02.txt
+    data/03.txt
 
 source-repository head
   type: git
@@ -33,18 +35,25 @@ library
       Common
       Day00
       Day01
+      Day02
+      Day03
       Lib
   other-modules:
       Paths_aoc2020
   hs-source-dirs:
       src
+  default-extensions: BangPatterns ConstraintKinds DataKinds DefaultSignatures DeriveAnyClass DeriveDataTypeable DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GeneralizedNewtypeDeriving InstanceSigs MultiParamTypeClasses MultiWayIf NamedFieldPuns LambdaCase OverloadedLabels OverloadedStrings PatternSynonyms PolyKinds QuasiQuotes RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TupleSections TypeApplications TypeOperators ViewPatterns
+  ghc-options: -Werror -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules
   build-depends:
       base >=4.7 && <5
     , clock
     , containers
     , formatting
+    , generic-lens
     , hspec
+    , lens
     , linear
+    , megaparsec
     , raw-strings-qq
   default-language: Haskell2010
 
@@ -54,15 +63,19 @@ executable aoc2020-exe
       Paths_aoc2020
   hs-source-dirs:
       app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  default-extensions: BangPatterns ConstraintKinds DataKinds DefaultSignatures DeriveAnyClass DeriveDataTypeable DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GeneralizedNewtypeDeriving InstanceSigs MultiParamTypeClasses MultiWayIf NamedFieldPuns LambdaCase OverloadedLabels OverloadedStrings PatternSynonyms PolyKinds QuasiQuotes RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TupleSections TypeApplications TypeOperators ViewPatterns
+  ghc-options: -Werror -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aoc2020
     , base >=4.7 && <5
     , clock
     , containers
     , formatting
+    , generic-lens
     , hspec
+    , lens
     , linear
+    , megaparsec
     , raw-strings-qq
   default-language: Haskell2010
 
@@ -72,17 +85,23 @@ test-suite aoc2020-test
   other-modules:
       Day00Spec
       Day01Spec
+      Day02Spec
+      Day03Spec
       Paths_aoc2020
   hs-source-dirs:
       test
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  default-extensions: BangPatterns ConstraintKinds DataKinds DefaultSignatures DeriveAnyClass DeriveDataTypeable DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GeneralizedNewtypeDeriving InstanceSigs MultiParamTypeClasses MultiWayIf NamedFieldPuns LambdaCase OverloadedLabels OverloadedStrings PatternSynonyms PolyKinds QuasiQuotes RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TupleSections TypeApplications TypeOperators ViewPatterns
+  ghc-options: -Werror -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aoc2020
     , base >=4.7 && <5
     , clock
     , containers
     , formatting
+    , generic-lens
     , hspec
+    , lens
     , linear
+    , megaparsec
     , raw-strings-qq
   default-language: Haskell2010

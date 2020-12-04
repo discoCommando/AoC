@@ -2,10 +2,17 @@ module Day01 where
 
 import Common
 import Data.Maybe
+import qualified Text.Megaparsec as Mega
+import qualified Text.Megaparsec.Char as Mega
+import qualified Text.Megaparsec.Char.Lexer as Mega
+
+parser :: Parser [Int]
+parser = do
+  listParser Mega.decimal Mega.newline
 
 solution =
   Solution
-    { parse = fmap toInt . lines, -- No parsing required.
+    { parse = parser, -- No parsing required.
       part1 = solution1,
       part2 = solution2
     }

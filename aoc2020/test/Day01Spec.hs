@@ -1,6 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes #-}
-
 module Day01Spec where
 
 import Common
@@ -9,7 +6,7 @@ import Test.Hspec
 import Text.RawString.QQ
 
 example1 =
-  parse
+  unsafeParseExample
     solution
     [r|1721
 979
