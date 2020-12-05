@@ -8,7 +8,7 @@ import qualified Text.Megaparsec.Char.Lexer as Mega
 
 parser :: Parser [Int]
 parser = do
-  listParser Mega.decimal Mega.newline
+  listParser Mega.newline Mega.decimal
 
 solution =
   Solution

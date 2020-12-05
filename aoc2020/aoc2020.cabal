@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: bb6c3294ab358fc4347e77231f7eddf6b162ad12ebe3da988254deef5f90b3b5
+-- hash: 28d8efefbce0d09da0112225b08ab9f83ac6d2d42ed9dc79a98c912bb7f11717
 
 name:           aoc2020
 version:        0.1.0.0
@@ -32,12 +32,14 @@ source-repository head
 
 library
   exposed-modules:
+      Board
       Common
       Day00
       Day01
       Day02
       Day03
       Lib
+      STState
   other-modules:
       Paths_aoc2020
   hs-source-dirs:
@@ -45,7 +47,9 @@ library
   default-extensions: BangPatterns ConstraintKinds DataKinds DefaultSignatures DeriveAnyClass DeriveDataTypeable DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GeneralizedNewtypeDeriving InstanceSigs MultiParamTypeClasses MultiWayIf NamedFieldPuns LambdaCase OverloadedLabels OverloadedStrings PatternSynonyms PolyKinds QuasiQuotes RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TupleSections TypeApplications TypeOperators ViewPatterns
   ghc-options: -Werror -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules
   build-depends:
-      base >=4.7 && <5
+      QuickCheck
+    , array
+    , base >=4.7 && <5
     , clock
     , containers
     , formatting
@@ -54,6 +58,7 @@ library
     , lens
     , linear
     , megaparsec
+    , mtl
     , raw-strings-qq
   default-language: Haskell2010
 
@@ -66,7 +71,9 @@ executable aoc2020-exe
   default-extensions: BangPatterns ConstraintKinds DataKinds DefaultSignatures DeriveAnyClass DeriveDataTypeable DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GeneralizedNewtypeDeriving InstanceSigs MultiParamTypeClasses MultiWayIf NamedFieldPuns LambdaCase OverloadedLabels OverloadedStrings PatternSynonyms PolyKinds QuasiQuotes RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TupleSections TypeApplications TypeOperators ViewPatterns
   ghc-options: -Werror -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      aoc2020
+      QuickCheck
+    , aoc2020
+    , array
     , base >=4.7 && <5
     , clock
     , containers
@@ -76,6 +83,7 @@ executable aoc2020-exe
     , lens
     , linear
     , megaparsec
+    , mtl
     , raw-strings-qq
   default-language: Haskell2010
 
@@ -83,6 +91,8 @@ test-suite aoc2020-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      BoardSpec
+      CommonSpec
       Day00Spec
       Day01Spec
       Day02Spec
@@ -93,7 +103,9 @@ test-suite aoc2020-test
   default-extensions: BangPatterns ConstraintKinds DataKinds DefaultSignatures DeriveAnyClass DeriveDataTypeable DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GeneralizedNewtypeDeriving InstanceSigs MultiParamTypeClasses MultiWayIf NamedFieldPuns LambdaCase OverloadedLabels OverloadedStrings PatternSynonyms PolyKinds QuasiQuotes RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TupleSections TypeApplications TypeOperators ViewPatterns
   ghc-options: -Werror -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      aoc2020
+      QuickCheck
+    , aoc2020
+    , array
     , base >=4.7 && <5
     , clock
     , containers
@@ -103,5 +115,6 @@ test-suite aoc2020-test
     , lens
     , linear
     , megaparsec
+    , mtl
     , raw-strings-qq
   default-language: Haskell2010

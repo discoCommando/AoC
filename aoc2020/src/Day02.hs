@@ -40,7 +40,7 @@ parser = do
 solution :: Solution [InputLine] Int Int
 solution =
   Solution
-    { parse = listParser parser MegaC.newline, -- No parsing required.
+    { parse = listParser MegaC.newline parser, -- No parsing required.
       part1 = solution1,
       part2 = solution2
     }
@@ -60,8 +60,8 @@ solution1 = length . filter (== True) . fmap validInput
 
 validInput2 :: InputLine -> Bool
 validInput2 i =
-  let x = view #password i `unsafeGet` (view (#policy . #min) i - 1)
-      y = view #password i `unsafeGet` (view (#policy . #max) i - 1)
+  let x = view #password i `unsafeGet'` (view (#policy . #min) i - 1)
+      y = view #password i `unsafeGet'` (view (#policy . #max) i - 1)
       l = i ^. #policy . #letter
    in (x == l || y == l) && (x /= y)
 
