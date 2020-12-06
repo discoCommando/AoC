@@ -5,7 +5,7 @@
 
 module Parseable where
 
-import Common
+import Common (Parser, parseStringAs, unsafeParse)
 import Control.Monad (join)
 import Data.Kind (Constraint)
 import Data.Typeable
@@ -88,8 +88,9 @@ instance (Parseable x, Parseable (Choice (x' : xs)), Ret x ~ Ret (Choice (x' : x
   type Ret (Choice (x ': x' ': xs)) = Ret x
   parser _ =
     Mega.choice
-      [ parser
-          (Proxy :: Proxy x),
+      [ Mega.try $
+          parser
+            (Proxy :: Proxy x),
         parser
           (Proxy :: Proxy (Choice (x' ': xs)))
       ]

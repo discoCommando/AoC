@@ -185,10 +185,7 @@ findFullField :: forall v. (KnownValue v, Val v ~ FieldName, Parseable (FieldVal
 findFullField p fields = do
   let name = valVal p
   f <- findByName name fields
-  let a = case Mega.parse (fieldValueParser p) "a" (view #value f) of
-        Left e -> trace (show e) Nothing
-        Right v -> Just v
-  v <- a
+  v <- Mega.parseMaybe (fieldValueParser p) (view #value f)
   pure (f & #value .~ v)
 
 findFieldValue :: forall v. (KnownValue v, Val v ~ FieldName, Parseable (FieldValue v)) => Proxy v -> [Field FieldName String] -> Maybe (Ret (FieldValue v))

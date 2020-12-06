@@ -35,8 +35,10 @@ solution =
       part2 = part2'
     }
 
+part1' :: [[Field FieldName String]] -> Int
 part1' = length . filter id . fmap hasAllFieldNames
 
+part2' :: [[Field FieldName String]] -> Int
 part2' = length . filter (is #_Just) . fmap tryCreateValidPassport
 
 main =

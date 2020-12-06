@@ -45,10 +45,9 @@ eyr:2038 hcl:74454a iyr:2023
 pid:3556412378 byr:2007|]
 
 example3 =
-  traceShowId $
-    unsafeParseExample
-      solution
-      [r|pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:1980
+  unsafeParseExample
+    solution
+    [r|pid:087499704 hgt:74in ecl:grn iyr:2012 eyr:2030 byr:1980
 hcl:#623a2f
 
 eyr:2029 ecl:blu cid:129 byr:1989
@@ -76,5 +75,4 @@ spec =
       part1 solution example1Parsed `shouldBe` 2
       part2 solution example2 `shouldBe` 0
       length example3 `shouldBe` 4
-      fmap tryCreateValidPassport example3 `shouldBe` []
       part2 solution example3 `shouldBe` 4
