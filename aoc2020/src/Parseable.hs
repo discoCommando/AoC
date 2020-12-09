@@ -34,6 +34,12 @@ class KnownValue x where
   type Val x :: *
   valVal :: Proxy x -> Val x
 
+data EmptyArr (a :: *) = EmptyArr
+
+instance (Parseable a) => KnownValue (EmptyArr a) where
+  type Val (EmptyArr a) = [Ret a]
+  valVal _ = []
+
 instance KnownValue () where
   type Val () = ()
   valVal _ = ()
@@ -113,6 +119,8 @@ instance HasOnlyDecimal Digit
 
 instance HasOnlyDecimal (Many Digit)
 
+instance HasOnlyDecimal (Some Digit)
+
 instance (HasOnlyDecimal a) => HasOnlyDecimal (a <$ b)
 
 instance (HasOnlyDecimal a) => HasOnlyDecimal (b $> a)
@@ -131,6 +139,12 @@ data Many v
 instance (Parseable x) => Parseable (Many x) where
   type Ret (Many x) = [Ret x]
   parser _ = Mega.many (parser (Proxy :: Proxy x))
+
+data Some v
+
+instance (Parseable x) => Parseable (Some x) where
+  type Ret (Some x) = [Ret x]
+  parser _ = Mega.some (parser (Proxy :: Proxy x))
 
 data SepEndBy v sep
 
