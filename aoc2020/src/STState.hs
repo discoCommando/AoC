@@ -2,8 +2,10 @@ module STState where
 
 import Board
 import Common
+import Control.Lens
 import Control.Monad.ST
 import Control.Monad.State
+import Data.Array.ST
 import Data.STRef
 
 newtype STState st s a = STState {runSTState :: STRef s st -> ST s a}

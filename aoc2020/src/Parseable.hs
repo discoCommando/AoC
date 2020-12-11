@@ -34,6 +34,14 @@ class KnownValue x where
   type Val x :: *
   valVal :: Proxy x -> Val x
 
+instance KnownValue True where
+  type Val True = Bool
+  valVal _ = True
+
+instance KnownValue False where
+  type Val False = Bool
+  valVal _ = False
+
 data EmptyArr (a :: *) = EmptyArr
 
 instance (Parseable a) => KnownValue (EmptyArr a) where
