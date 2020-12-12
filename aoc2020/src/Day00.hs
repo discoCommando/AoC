@@ -7,18 +7,24 @@ import qualified Text.Megaparsec as Mega
 import qualified Text.Megaparsec.Char as Mega
 import qualified Text.Megaparsec.Char.Lexer as Mega
 
-type InputLine = Digit
+data InputLine = InputLine {} deriving stock (Generic, Show, Eq)
 
+inputParser :: Parser InputLine
+inputParser = undefined
+
+solution :: Solution [InputLine] Int Int
 solution =
   Solution
-    { parse = parser (Proxy :: Proxy InputLine), -- No parsing required.
+    { parse = Mega.sepEndBy inputParser Mega.newline, -- No parsing required.
       part1 = part1',
       part2 = part2'
     }
 
-part1' = tbd
+part1' :: [InputLine] -> Int
+part1' = const 1
 
-part2' = tbd
+part2' :: [InputLine] -> Int
+part2' = const 1
 
 main =
   aoc
