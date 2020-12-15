@@ -46,7 +46,7 @@ part2' ls = do
   let highest = last sls
   let s = DS.fromList sls
   let all = s DS.|> (highest + 3)
-  let diffs = DS.zipWith (-) all (0 DS.<| all)
+  let diffs = Debug.Trace.traceShowId $ DS.zipWith (-) all (0 DS.<| all)
   let initState = FibonacciState $ DM.fromList [(0, 1), (1, 1), (2, 2), (3, 4)]
   let groups = DS.foldlWithIndex (\(x : xs) _ v -> if v == 3 then 0 : x : xs else (x + 1) : xs) [0] diffs
   product $ evalState (traverse ultraFib groups) initState

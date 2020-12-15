@@ -35,6 +35,7 @@ dependencies:
   - array
   - QuickCheck
   - mtl
+  - prettyprinter
 
 default-extensions:
   - BangPatterns

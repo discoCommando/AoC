@@ -3,6 +3,7 @@ module STState where
 import Board
 import Common
 import Control.Lens
+import Control.Monad.Except
 import Control.Monad.ST
 import Control.Monad.State
 import Data.Array.ST
@@ -10,6 +11,15 @@ import Data.STRef
 
 newtype STState st s a = STState {runSTState :: STRef s st -> ST s a}
   deriving stock (Generic)
+
+-- Except over the ststate
+
+type A e st s a = ExceptT e (STState st s) a
+
+-- Either e (state, a)
+-- (state, Either e a)
+
+-- MaybeT m a = m (Maybe a)
 
 initSTState :: st -> STState st s a -> ST s (a, STRef s st)
 initSTState initialState sts = do
@@ -43,3 +53,10 @@ instance MonadState st (STState st s) where
 
 liftS :: ST s a -> STState st s a
 liftS st = STState $ const st
+
+instance Board (STBoard s) e (STState st s) where
+  getWidth = liftS . getWidth
+  getHeight = liftS . getHeight
+  newBoard = liftS . newBoard
+  unsafeGet pos = liftS . unsafeGet pos
+  unsafeSet pos v = liftS . unsafeSet pos v
