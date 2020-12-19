@@ -16,11 +16,6 @@ newtype STState st s a = STState {runSTState :: STRef s st -> ST s a}
 
 type A e st s a = ExceptT e (STState st s) a
 
--- Either e (state, a)
--- (state, Either e a)
-
--- MaybeT m a = m (Maybe a)
-
 initSTState :: st -> STState st s a -> ST s (a, STRef s st)
 initSTState initialState sts = do
   stref <- newSTRef initialState

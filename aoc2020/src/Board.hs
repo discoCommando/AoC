@@ -38,7 +38,7 @@ performTurn turn direction =
         South ->
           East
         East ->
-          West
+          North
     TRight ->
       case direction of
         North ->
@@ -49,6 +49,25 @@ performTurn turn direction =
           West
         East ->
           South
+
+rotate :: Turn -> Position -> Position
+rotate t Position {..} =
+  case t of
+    TLeft ->
+      Position (fromIntegral y) $ (-1) * fromIntegral x
+    TRight ->
+      Position ((-1) * fromIntegral y) $ fromIntegral x
+
+directionToVector :: Direction -> Position
+directionToVector = \case
+  North -> Position 0 (-1)
+  East -> Position 1 0
+  West -> Position (-1) 0
+  South -> Position 0 1
+
+applyF :: Int -> (a -> a) -> a -> a
+applyF 0 _ = id
+applyF x f = f . applyF (x - 1) f
 
 newtype Width = Width {getWidth' :: Int}
   deriving newtype (Num, Ord, Ix, Enum, Real, Integral, Arbitrary)
