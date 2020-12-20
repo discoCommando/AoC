@@ -24,7 +24,7 @@ spec =
       False `shouldBe` False
       part1 solution example1 `shouldBe` 295
       part2 solution example1 `shouldBe` 1068781
-      part2 solution example2 `shouldBe` 1068788
+      part2 solution example2 `shouldBe` 1202161486
 
 {-
 x mod 7 = 0

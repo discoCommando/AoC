@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8928304a8ce4f62a7901c8ebac6dafd7131295d450b446d1edb3232b29c75593
+-- hash: af7e38769ccbfa7e9c99ba5a757fe6ff730d39b5693237c197cbbcf4976761c6
 
 name:           aoc2020
 version:        0.1.0.0
@@ -35,6 +35,7 @@ data-files:
     data/11.txt
     data/12.txt
     data/13.txt
+    data/14.txt
 
 source-repository head
   type: git
@@ -58,6 +59,7 @@ library
       Day11
       Day12
       Day13
+      Day14
       Lib
       Parseable
       Passport
@@ -131,6 +133,7 @@ test-suite aoc2020-test
       Day11Spec
       Day12Spec
       Day13Spec
+      Day14Spec
       ParseableSpec
       PassportSpec
       Paths_aoc2020
