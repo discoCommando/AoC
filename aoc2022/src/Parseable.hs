@@ -44,7 +44,6 @@ instance KnownValue False where
 
 data EmptyArr (a :: *) = EmptyArr
 
-
 instance (Parseable a) => KnownValue (EmptyArr a) where
   type Val (EmptyArr a) = [Ret a]
   valVal _ = []
@@ -66,6 +65,12 @@ type Chunk' v = Const v v
 instance (KnownSymbol v, KnownValue x) => Parseable (Const v x) where
   type Ret (Const v x) = Val x
   parser _ = parseStringAs (symbolVal (Proxy :: Proxy v)) (valVal (Proxy :: Proxy x))
+
+data Pure a
+
+instance (KnownValue a) => Parseable (Pure a) where
+  type Ret (Pure a) = Val a
+  parser _ = pure $ valVal (Proxy :: Proxy a)
 
 data a :+: b
 

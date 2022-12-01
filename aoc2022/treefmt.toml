@@ -1,0 +1,19 @@
+[formatter.haskell]
+command = "ormolu"
+options = [
+  "--mode", "inplace",
+  "--check-idempotence",
+]
+includes = ["*.hs"]
+
+[formatter.nix]
+command = "nixpkgs-fmt"
+includes = ["*.nix"]
+# Don't format generated code
+excludes = [
+  "nix/haskellPackages/*",
+  "nix/packages/custom/servant*.nix",
+  "nix/sources.nix",
+  "mrcl/nix/sources.nix",
+]
+
