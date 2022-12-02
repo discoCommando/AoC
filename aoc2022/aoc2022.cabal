@@ -27,6 +27,7 @@ library
       Common
       Day00
       Day01
+      Day02
       Parseable
   other-modules:
       Paths_aoc2022
@@ -153,6 +154,7 @@ test-suite aoc2022-test
   other-modules:
       Day00Spec
       Day01Spec
+      Day02Spec
       Paths_aoc2022
   hs-source-dirs:
       test

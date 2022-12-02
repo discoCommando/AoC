@@ -1,13 +1,31 @@
 cradle:
   cabal:
-    - path: "src"
-      component: "lib:aoc2022"
+    - path: "test/Spec.hs"
+      component: "aoc2022:test:aoc2022-test"
+
+    - path: "test/Day00Spec.hs"
+      component: "aoc2022:test:aoc2022-test"
+
+    - path: "test/Day01Spec.hs"
+      component: "aoc2022:test:aoc2022-test"
+
+    - path: "test/Day02Spec.hs"
+      component: "aoc2022:test:aoc2022-test"
 
     - path: "app/Main.hs"
       component: "aoc2022:exe:aoc2022-exe"
 
-    - path: "app/Paths_aoc2022.hs"
-      component: "aoc2022:exe:aoc2022-exe"
+    - path: "src/Common.hs"
+      component: "lib:aoc2022"
 
-    - path: "test"
-      component: "aoc2022:test:aoc2022-test"
+    - path: "src/Day00.hs"
+      component: "lib:aoc2022"
+
+    - path: "src/Day01.hs"
+      component: "lib:aoc2022"
+
+    - path: "src/Day02.hs"
+      component: "lib:aoc2022"
+
+    - path: "src/Parseable.hs"
+      component: "lib:aoc2022"
