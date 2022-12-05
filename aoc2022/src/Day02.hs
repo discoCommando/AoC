@@ -97,7 +97,8 @@ part2' =
     . fmap
       ( \(opponent, hack) ->
           totalScore opponent $
-            choosePiece opponent $ pieceToOutcome hack
+            choosePiece opponent $
+              pieceToOutcome hack
       )
 
 main =

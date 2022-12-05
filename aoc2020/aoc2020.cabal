@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.35.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5426d467e37dd164b9138dab99d8f76313adf8e807ad072ca52485279c7a6d16
+-- hash: ed7748f1ffa96c8439e2a4500b6f69776928dee7048e7052d42ad80699b2827c
 
 name:           aoc2020
 version:        0.1.0.0
@@ -70,7 +70,42 @@ library
       Paths_aoc2020
   hs-source-dirs:
       src
-  default-extensions: BangPatterns ConstraintKinds DataKinds DefaultSignatures DeriveAnyClass DeriveDataTypeable DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GeneralizedNewtypeDeriving InstanceSigs MultiParamTypeClasses MultiWayIf NamedFieldPuns LambdaCase OverloadedLabels OverloadedStrings PatternSynonyms PolyKinds QuasiQuotes RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TupleSections TypeApplications TypeOperators ViewPatterns
+  default-extensions:
+      BangPatterns
+      ConstraintKinds
+      DataKinds
+      DefaultSignatures
+      DeriveAnyClass
+      DeriveDataTypeable
+      DeriveFoldable
+      DeriveFunctor
+      DeriveGeneric
+      DeriveTraversable
+      DerivingStrategies
+      DerivingVia
+      DuplicateRecordFields
+      FlexibleContexts
+      FlexibleInstances
+      FunctionalDependencies
+      GeneralizedNewtypeDeriving
+      InstanceSigs
+      MultiParamTypeClasses
+      MultiWayIf
+      NamedFieldPuns
+      LambdaCase
+      OverloadedLabels
+      OverloadedStrings
+      PatternSynonyms
+      PolyKinds
+      QuasiQuotes
+      RankNTypes
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      TupleSections
+      TypeApplications
+      TypeOperators
+      ViewPatterns
   ghc-options: -Werror -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules
   build-depends:
       QuickCheck
@@ -95,7 +130,42 @@ executable aoc2020-exe
       Paths_aoc2020
   hs-source-dirs:
       app
-  default-extensions: BangPatterns ConstraintKinds DataKinds DefaultSignatures DeriveAnyClass DeriveDataTypeable DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GeneralizedNewtypeDeriving InstanceSigs MultiParamTypeClasses MultiWayIf NamedFieldPuns LambdaCase OverloadedLabels OverloadedStrings PatternSynonyms PolyKinds QuasiQuotes RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TupleSections TypeApplications TypeOperators ViewPatterns
+  default-extensions:
+      BangPatterns
+      ConstraintKinds
+      DataKinds
+      DefaultSignatures
+      DeriveAnyClass
+      DeriveDataTypeable
+      DeriveFoldable
+      DeriveFunctor
+      DeriveGeneric
+      DeriveTraversable
+      DerivingStrategies
+      DerivingVia
+      DuplicateRecordFields
+      FlexibleContexts
+      FlexibleInstances
+      FunctionalDependencies
+      GeneralizedNewtypeDeriving
+      InstanceSigs
+      MultiParamTypeClasses
+      MultiWayIf
+      NamedFieldPuns
+      LambdaCase
+      OverloadedLabels
+      OverloadedStrings
+      PatternSynonyms
+      PolyKinds
+      QuasiQuotes
+      RankNTypes
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      TupleSections
+      TypeApplications
+      TypeOperators
+      ViewPatterns
   ghc-options: -Werror -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       QuickCheck
@@ -142,7 +212,42 @@ test-suite aoc2020-test
       Paths_aoc2020
   hs-source-dirs:
       test
-  default-extensions: BangPatterns ConstraintKinds DataKinds DefaultSignatures DeriveAnyClass DeriveDataTypeable DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable DerivingStrategies DerivingVia DuplicateRecordFields FlexibleContexts FlexibleInstances FunctionalDependencies GeneralizedNewtypeDeriving InstanceSigs MultiParamTypeClasses MultiWayIf NamedFieldPuns LambdaCase OverloadedLabels OverloadedStrings PatternSynonyms PolyKinds QuasiQuotes RankNTypes RecordWildCards ScopedTypeVariables StandaloneDeriving TupleSections TypeApplications TypeOperators ViewPatterns
+  default-extensions:
+      BangPatterns
+      ConstraintKinds
+      DataKinds
+      DefaultSignatures
+      DeriveAnyClass
+      DeriveDataTypeable
+      DeriveFoldable
+      DeriveFunctor
+      DeriveGeneric
+      DeriveTraversable
+      DerivingStrategies
+      DerivingVia
+      DuplicateRecordFields
+      FlexibleContexts
+      FlexibleInstances
+      FunctionalDependencies
+      GeneralizedNewtypeDeriving
+      InstanceSigs
+      MultiParamTypeClasses
+      MultiWayIf
+      NamedFieldPuns
+      LambdaCase
+      OverloadedLabels
+      OverloadedStrings
+      PatternSynonyms
+      PolyKinds
+      QuasiQuotes
+      RankNTypes
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      TupleSections
+      TypeApplications
+      TypeOperators
+      ViewPatterns
   ghc-options: -Werror -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       QuickCheck

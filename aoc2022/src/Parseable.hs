@@ -34,6 +34,10 @@ class KnownValue x where
   type Val x :: *
   valVal :: Proxy x -> Val x
 
+instance (KnownNat a) => KnownValue a where
+  type Val a = Integer
+  valVal = natVal
+
 instance KnownValue True where
   type Val True = Bool
   valVal _ = True
@@ -65,6 +69,10 @@ type Chunk' v = Const v v
 instance (KnownSymbol v, KnownValue x) => Parseable (Const v x) where
   type Ret (Const v x) = Val x
   parser _ = parseStringAs (symbolVal (Proxy :: Proxy v)) (valVal (Proxy :: Proxy x))
+
+-- instance (KnownNat v, KnownValue x) => Parseable (ConstN v x) where
+--   type Ret (ConstN v x) = Val x
+--   parser _ = parseStringAs (natVal (Proxy :: Proxy v)) (valVal (Proxy :: Proxy x))
 
 data Pure a
 
@@ -200,7 +208,7 @@ data Space
 
 instance Parseable Space where
   type Ret Space = Char
-  parser _ = Mega.spaceChar
+  parser _ = Mega.char ' '
 
 type Spaces = Many Space
 

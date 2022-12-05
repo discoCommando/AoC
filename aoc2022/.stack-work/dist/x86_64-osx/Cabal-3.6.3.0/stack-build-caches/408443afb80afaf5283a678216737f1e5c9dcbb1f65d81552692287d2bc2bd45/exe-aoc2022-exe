@@ -1,0 +1,14 @@
+? /Users/tomaszwawreniuk/.stack/programs/x86_64-osx/ghc-9.2.4/lib/ghc-9.2.4/lib/x86_64-osx-ghc-9.2.4/rts-1.0.2/include/ghcversion.h
+: hash: 26f8dd5ae1a182c3c5aa69413de99aaf6cf8475cccdef3d05a4d055025be719f
+/Users/tomaszwawreniuk/code/AoC/aoc2022/.stack-work/dist/x86_64-osx/Cabal-3.6.3.0/build/aoc2022-exe/autogen/Paths_aoc2022.hs:
+  hash: 57c651c6e3002e203e322dcd360038ee751c89b1f14c8ab686d9ecc2da4dd020
+/Users/tomaszwawreniuk/code/AoC/aoc2022/.stack-work/dist/x86_64-osx/Cabal-3.6.3.0/build/aoc2022-exe/autogen/cabal_macros.h:
+  hash: a9a4bb81cf6018fe242d6101cec27f775376e6292e4a186bd793f43b817b1417
+/Users/tomaszwawreniuk/code/AoC/aoc2022/CHANGELOG.md:
+  hash: 08518fd69c083d7aa28a65f8e2bdc6de6563241aae3883979e5950e385cfe5b2
+/Users/tomaszwawreniuk/code/AoC/aoc2022/aoc2022.cabal:
+  hash: 9a47b53434e74ab5d4f6d1e3cd0ec2d2ddd38ecd489bc29e1f0b8c8dd186a994
+/Users/tomaszwawreniuk/code/AoC/aoc2022/app/Main.hs:
+  hash: dc1d51fd1a254abace8789a66f170bb7edf4a8efaa2d95c24ce89633b1f90b15
+/Users/tomaszwawreniuk/code/AoC/aoc2022/package.yaml:
+  hash: 073929b7a3ab6cce4fa0bd756ff102e2f74d5fd7b64e4b98db7e04ff985bb9b1

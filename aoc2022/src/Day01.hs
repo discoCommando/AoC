@@ -40,7 +40,11 @@ part1' input =
 
 part2' :: [InputLine] -> Int
 part2' =
-  sum . take 3 . reverse . sort . fmap part1'
+  sum
+    . take 3
+    . reverse
+    . sort
+    . fmap part1'
     . groupBy
       ( \(InputLine a) (InputLine b) ->
           isLeft a && isLeft b

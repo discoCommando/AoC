@@ -1,14 +1,15 @@
-module Day00Spec where
+module Day01Spec where
 
 import Common
 import Day00 hiding (main)
 import Test.Hspec
-import Text.RawString.QQ (r)
 
-example1 =
-  unsafeParseExample
-    solution
-    [r| |]
+-- import Text.RawString.QQ (r)
+
+-- example1 =
+--   unsafeParseExample
+--     solution
+--     [r| |]
 
 spec =
   describe "all" $ do
