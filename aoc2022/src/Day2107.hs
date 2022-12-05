@@ -3,28 +3,46 @@ module Day2107 where
 import Common
 import Data.Data
 import Parseable
-import qualified Text.Megaparsec as Mega
 import qualified Text.Megaparsec.Char as Mega
 import qualified Text.Megaparsec.Char.Lexer as Mega
+import Text.Megaparsec (sepEndBy)
+import Text.Megaparsec.Char (space)
+import Debug.Trace
 
-data InputLine = InputLine {} deriving stock (Generic, Show, Eq)
+type InputLine = [Int]
 
 inputParser :: Parser InputLine
 inputParser = undefined
 
-solution :: Solution [InputLine] Int Int
+solution :: Solution InputLine Int Int
 solution =
   Solution
-    { parse = Mega.sepEndBy inputParser Mega.newline, -- No parsing required.
+    { parse = sepEndBy Mega.decimal (Mega.char ','), -- No parsing required.
       part1 = part1',
       part2 = part2'
     }
 
-part1' :: [InputLine] -> Int
-part1' = const 1
+part1' :: InputLine -> Int
+part1' i =
+  let
+      min' = minimum i
+      max' = maximum i
+      sum2 =  (\avg -> sum $ (\a -> abs $ a - avg) <$> i) <$> [min' .. max']
+  in
+  minimum sum2
 
-part2' :: [InputLine] -> Int
-part2' = const 1
+arithmeticSum :: Int -> Int -> Int
+arithmeticSum i1 i2 = (1 + abs (i1 - i2)) * abs (i1 - i2) `div` 2
+
+
+part2' :: InputLine -> Int
+part2' i =
+  let
+      min' = minimum i
+      max' = maximum i
+      sum2 =  (\avg -> sum $ arithmeticSum avg <$> i) <$> [min' .. max']
+  in
+  minimum sum2
 
 main =
   aoc
