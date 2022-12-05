@@ -18,7 +18,15 @@ class Parseable from where
   type Ret from :: *
   parser :: Proxy from -> Parser (Ret from)
 
+data Letter
+
+instance Parseable Letter where
+  type Ret Letter = Char
+  parser _ = Mega.letterChar
+
 data Digit
+
+type Decimal = ToInt (Some Digit)
 
 instance Parseable Digit where
   type Ret Digit = Char
