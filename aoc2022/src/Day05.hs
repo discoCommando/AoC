@@ -95,12 +95,8 @@ getResult (h : rest) = if null h then getResult rest else head h : getResult res
 
 makeMove :: Move -> [[Crate]] -> [[Crate]]
 makeMove Move {..} cratesList =
-  if count == 0
-    then cratesList
-    else
-      makeMove Move {count = count - 1, ..} $
-        applyAt tail (from - 1) $
-          applyAt (head (cratesList !! (from - 1)) :) (to - 1) cratesList
+  applyAt (drop count) (from - 1) $
+    applyAt ((reverse . take count) (cratesList !! (from - 1)) ++) (to - 1) cratesList
 
 part1' :: InputLine -> String
 part1' InputLine {..} =
