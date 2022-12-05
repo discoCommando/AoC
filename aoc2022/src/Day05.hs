@@ -2,11 +2,11 @@ module Day05 where
 
 import Common
 import Data.Data
+import Debug.Trace
 import Parseable
 import qualified Text.Megaparsec as Mega
 import qualified Text.Megaparsec.Char as Mega
 import qualified Text.Megaparsec.Char.Lexer as Mega
-import Debug.Trace
 
 type Crate' = (Chunk "[" $> Letter <$ Chunk "]") <||> Chunk "   "
 
@@ -54,18 +54,19 @@ rawCratesToCrates :: [[Either Char ()]] -> [[Crate]]
 rawCratesToCrates rawCrates =
   let longest = maximum $ length <$> rawCrates
       emptyCrates = [[] | _ <- [0 .. longest - 1]]
-   in reverse <$> foldl
-        ( \crates ->
-            snd
-              . foldl
-                ( \(i, crates') -> \case
-                    Right () -> (i + 1, crates')
-                    Left c -> (i + 1, applyAt (c :) i crates')
-                )
-                (0, crates)
-        )
-        emptyCrates
-        rawCrates
+   in reverse
+        <$> foldl
+          ( \crates ->
+              snd
+                . foldl
+                  ( \(i, crates') -> \case
+                      Right () -> (i + 1, crates')
+                      Left c -> (i + 1, applyAt (c :) i crates')
+                  )
+                  (0, crates)
+          )
+          emptyCrates
+          rawCrates
 
 rawMovesToMoves :: [((Int, Int), Int)] -> [Move]
 rawMovesToMoves = fmap (\((count, from), to) -> Move {..})
@@ -76,8 +77,8 @@ inputParser' = parser (Proxy :: Proxy InputLine')
 inputParser :: Parser InputLine
 inputParser = do
   (rawCrates, rawMoves) <- parser (Proxy :: Proxy InputLine')
-  let crates =  rawCratesToCrates rawCrates
-  let moves =  rawMovesToMoves rawMoves
+  let crates = rawCratesToCrates rawCrates
+  let moves = rawMovesToMoves rawMoves
   pure InputLine {..}
 
 solution :: Solution InputLine String String
@@ -105,18 +106,18 @@ part1' :: InputLine -> String
 part1' InputLine {..} =
   if null moves
     then getResult crates
-    else part1'  InputLine {moves = tail moves, crates = makeMove (head moves) crates}
+    else part1' InputLine {moves = tail moves, crates = makeMove (head moves) crates}
 
 makeMove2 :: Move -> [[Crate]] -> [[Crate]]
-makeMove2 Move {..} cratesList = 
-        applyAt (drop count) (from - 1) $
-          applyAt (take count (cratesList !! (from - 1)) ++ ) (to - 1) cratesList
+makeMove2 Move {..} cratesList =
+  applyAt (drop count) (from - 1) $
+    applyAt (take count (cratesList !! (from - 1)) ++) (to - 1) cratesList
 
 part2' :: InputLine -> String
 part2' InputLine {..} =
   if null moves
     then getResult crates
-    else part2'  InputLine {moves = tail moves, crates = makeMove2 (head moves) crates}
+    else part2' InputLine {moves = tail moves, crates = makeMove2 (head moves) crates}
 
 main =
   aoc

@@ -45,10 +45,10 @@ createLine :: InputLine -> [(Int, Int)]
 createLine InputLine {..} =
   let lx = x1 - x2
       ly = y1 - y2
-      vx =  getVector x1 x2
-      vy =  getVector y1 y2
+      vx = getVector x1 x2
+      vy = getVector y1 y2
       length' = max (abs lx) (abs ly)
-   in [(x1 + vx * i, y1 + vy * i) | i <-  [0 .. length']]
+   in [(x1 + vx * i, y1 + vy * i) | i <- [0 .. length']]
 
 part1' :: [InputLine] -> Int
 part1' = part2' . filter haveSameCoordinates
@@ -62,15 +62,14 @@ part1' = part2' . filter haveSameCoordinates
 --   pure 1
 
 part2' :: [InputLine] -> Int
-part2' = 
-  go Map.empty   
+part2' =
+  go Map.empty
   where
     go :: Map' -> [InputLine] -> Int
     go map' [] =
-      length $ 
+      length $
         filter (\(_, cell) -> cell.count >= 2) $
-          
-            Map.toList map'
+          Map.toList map'
     go map' (inputLine : rest) =
       let line = createLine inputLine
           newMap = foldr (Map.alter (Just . maybe (Cell 1) (\cell -> cell {count = cell.count + 1}))) map' line

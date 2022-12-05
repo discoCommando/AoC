@@ -7,11 +7,11 @@ import Control.Lens
 import Control.Monad.ST
 import Data.Data
 import Data.List (transpose)
+import Debug.Trace (traceShowId)
 import Parseable
 import qualified Text.Megaparsec as Mega
 import qualified Text.Megaparsec.Char as Mega
 import qualified Text.Megaparsec.Char.Lexer as Mega
-import Debug.Trace (traceShowId)
 
 type Guesses' = SepEndBy (ToInt (Some Digit)) (Chunk ",") <$ Newline
 
@@ -19,8 +19,10 @@ type Board' =
   Newline
     $> Sized
          5
-         ( Many Space $> (SepEndBy (ToInt (Some Digit)) (Many Space)
-             <$ Newline)
+         ( Many Space
+             $> ( SepEndBy (ToInt (Some Digit)) (Many Space)
+                    <$ Newline
+                )
          )
 
 type InputLine' = Guesses' :+: Many Board'
@@ -81,7 +83,7 @@ part1' (head -> input) =
           finishedBoards = filter isBoardFinished result
        in if not (null finishedBoards)
             then boardScore guess $ head finishedBoards
-            else go (tail guesses)  result
+            else go (tail guesses) result
 
 part2' :: [InputLine] -> Int
 part2' (head -> input) =
@@ -94,7 +96,7 @@ part2' (head -> input) =
           newBoards = filter (not . isBoardFinished) result
        in if null newBoards
             then boardScore guess $ head result
-            else go (tail guesses)  newBoards
+            else go (tail guesses) newBoards
 
 main =
   aoc
