@@ -90,9 +90,15 @@ instance (KnownValue a) => Parseable (Pure a) where
 
 data a :+: b
 
+infixl 7 :+:
+
 data a $> b
 
+infixl 5 $>
+
 data a <$ b
+
+infixl 5 <$
 
 instance (Parseable a, Parseable b) => Parseable (a :+: b) where
   type Ret (a :+: b) = (Ret a, Ret b)

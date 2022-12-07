@@ -32,11 +32,15 @@ library
       Day03
       Day04
       Day05
+      Day06
+      Day07
       Day2103
       Day2104
       Day2105
       Day2106
       Day2107
+      Day2108
+      Numeric
       Parseable
       STState
   other-modules:
@@ -174,11 +178,14 @@ test-suite aoc2022-test
       Day03Spec
       Day04Spec
       Day05Spec
+      Day06Spec
+      Day07Spec
       Day2103Spec
       Day2104Spec
       Day2105Spec
       Day2106Spec
       Day2107Spec
+      Day2108Spec
       Paths_aoc2022
   hs-source-dirs:
       test

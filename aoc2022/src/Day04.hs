@@ -13,7 +13,7 @@ import qualified Text.Megaparsec.Char.Lexer as Mega
 
 type Sep' = Choice [Chunk ",", Chunk "-"]
 
-type InputLine' = ToInt (Some Digit) <$ Sep' :+: SepEndBy (ToInt (Some Digit)) Sep'
+type InputLine' = (ToInt (Some Digit) <$ Sep') :+: SepEndBy (ToInt (Some Digit)) Sep'
 
 data InputLine = InputLine {x1 :: Int, y1 :: Int, x2 :: Int, y2 :: Int} deriving stock (Generic, Show, Eq)
 
