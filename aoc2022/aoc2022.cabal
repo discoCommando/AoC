@@ -34,14 +34,18 @@ library
       Day05
       Day06
       Day07
+      Day08
       Day2103
       Day2104
       Day2105
       Day2106
       Day2107
       Day2108
+      Day2109
+      Day2110
       Numeric
       Parseable
+      RawBoard
       STState
   other-modules:
       Paths_aoc2022
@@ -180,12 +184,15 @@ test-suite aoc2022-test
       Day05Spec
       Day06Spec
       Day07Spec
+      Day08Spec
       Day2103Spec
       Day2104Spec
       Day2105Spec
       Day2106Spec
       Day2107Spec
       Day2108Spec
+      Day2109Spec
+      Day2110Spec
       Paths_aoc2022
   hs-source-dirs:
       test

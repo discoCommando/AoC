@@ -3,7 +3,7 @@
 
 -- taken from https://github.com/blinry/advent-of-code-2019/blob/master/Common.hs
 
-module Common (module X, Solution (..), benchmark, aoc, tbd, toInt, listParser, takeWhen, unsafeMaybe, unsafeParseExample, Parser, unsafeParse, parseStringAs, tryOneOf, unsafeGet') where
+module Common (module X, Solution (..), benchmark, aoc, tbd, toInt, listParser, takeWhen, unsafeMaybe, unsafeParseExample, Parser, unsafeParse, parseStringAs, tryOneOf, unsafeGet', PrimitiveBoard, Point, getAtBoard) where
 
 import Control.Applicative as X (Alternative ((<|>)))
 import Control.Exception
@@ -85,6 +85,15 @@ unsafeParseExample s =
 unsafeGet' :: [a] -> Int -> a
 unsafeGet' [] _ = undefined
 unsafeGet' (x : xs) l = if l == 0 then x else unsafeGet' xs (l - 1)
+
+type PrimitiveBoard a = [[a]]
+type Point = (Int, Int)
+
+getAtBoard :: Point -> PrimitiveBoard a -> Maybe a
+getAtBoard (x, y) b
+  | x < 0 || x >= length (head b) = Nothing
+  | y < 0 || y >= length b = Nothing
+  | otherwise = Just $ b !! y !! x
 
 parseStringAs :: String -> a -> Parser a
 parseStringAs s a =

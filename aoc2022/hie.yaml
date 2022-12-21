@@ -27,6 +27,9 @@ cradle:
     - path: "test/Day07Spec.hs"
       component: "aoc2022:test:aoc2022-test"
 
+    - path: "test/Day08Spec.hs"
+      component: "aoc2022:test:aoc2022-test"
+
     - path: "test/Day2103Spec.hs"
       component: "aoc2022:test:aoc2022-test"
 
@@ -43,6 +46,12 @@ cradle:
       component: "aoc2022:test:aoc2022-test"
 
     - path: "test/Day2108Spec.hs"
+      component: "aoc2022:test:aoc2022-test"
+
+    - path: "test/Day2109Spec.hs"
+      component: "aoc2022:test:aoc2022-test"
+
+    - path: "test/Day2110Spec.hs"
       component: "aoc2022:test:aoc2022-test"
 
     - path: "app/Main.hs"
@@ -78,6 +87,9 @@ cradle:
     - path: "src/Day07.hs"
       component: "lib:aoc2022"
 
+    - path: "src/Day08.hs"
+      component: "lib:aoc2022"
+
     - path: "src/Day2103.hs"
       component: "lib:aoc2022"
 
@@ -94,6 +106,12 @@ cradle:
       component: "lib:aoc2022"
 
     - path: "src/Day2108.hs"
+      component: "lib:aoc2022"
+
+    - path: "src/Day2109.hs"
+      component: "lib:aoc2022"
+
+    - path: "src/Day2110.hs"
       component: "lib:aoc2022"
 
     - path: "src/Numeric.hs"
