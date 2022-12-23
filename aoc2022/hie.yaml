@@ -30,6 +30,9 @@ cradle:
     - path: "test/Day08Spec.hs"
       component: "aoc2022:test:aoc2022-test"
 
+    - path: "test/Day09Spec.hs"
+      component: "aoc2022:test:aoc2022-test"
+
     - path: "test/Day2103Spec.hs"
       component: "aoc2022:test:aoc2022-test"
 
@@ -90,6 +93,9 @@ cradle:
     - path: "src/Day08.hs"
       component: "lib:aoc2022"
 
+    - path: "src/Day09.hs"
+      component: "lib:aoc2022"
+
     - path: "src/Day2103.hs"
       component: "lib:aoc2022"
 
@@ -118,6 +124,12 @@ cradle:
       component: "lib:aoc2022"
 
     - path: "src/Parseable.hs"
+      component: "lib:aoc2022"
+
+    - path: "src/Queue.hs"
+      component: "lib:aoc2022"
+
+    - path: "src/RawBoard.hs"
       component: "lib:aoc2022"
 
     - path: "src/STState.hs"

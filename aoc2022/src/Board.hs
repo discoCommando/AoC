@@ -49,6 +49,9 @@ performTurn turn direction =
         East ->
           South
 
+reverseDirection :: Direction -> Direction
+reverseDirection = applyF 2 (performTurn TLeft)
+
 rotate :: Turn -> Position -> Position
 rotate t Position {..} =
   case t of
@@ -99,7 +102,7 @@ performMove = \case
     #x %~ (+ 1)
 
 newtype Visited = Visited {getVisited :: Map.Map Position ()}
-  deriving newtype (Show, Eq)
+  deriving newtype (Show, Eq, Semigroup, Monoid)
   deriving stock (Generic)
 
 visit :: Position -> Visited -> Visited
@@ -144,6 +147,25 @@ instance Board (STBoard s) e (ST s) where
   unsafeSet position value board = do
     w <- readArray (board ^. #getSTBoard) $ position ^. #y
     writeArray w (position ^. #x) value
+
+isInBounds :: Board arr e m => Position -> arr e -> m Bool
+isInBounds position board = do
+  width <- getWidth board
+  height <- getHeight board
+  return $
+    and
+      [ position.x >= 0,
+        position.x < width,
+        position.y >= 0,
+        position.y < height
+      ]
+
+getAt :: Board arr e m => Position -> arr e -> m (Maybe e)
+getAt p a = do
+  inBounds <- isInBounds p a
+  if inBounds
+    then Just <$> unsafeGet p a
+    else return Nothing
 
 indexed :: [e] -> [(Int, e)]
 indexed = view _2 . Prelude.foldl (\(i, acc) e -> (i + 1, (i, e) : acc)) (0, [])
@@ -233,3 +255,10 @@ printBoard board = do
       pure $ s ++ ", "
     pure $ "[ " ++ join ss ++ " ]\n"
   pure $ join p
+
+indexBoard :: [[a]] -> [[(Position, a)]]
+indexBoard elements =
+  let
+    indexedX = fmap indexed elements
+    indexedY = indexed indexedX
+  in fmap (\(x, r) -> (\(y, e) -> (Position (Width x) (Height y), e)) <$> r) indexedY
