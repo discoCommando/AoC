@@ -2,7 +2,7 @@
 
 module Board where
 
-import Common ()
+import Common (Parser)
 import Control.Lens (view, (%~), (&), (^.), _2)
 import Control.Monad (foldM, forM_, join)
 import Control.Monad.ST
@@ -11,6 +11,8 @@ import Data.Array.Base (MArray (unsafeWrite), unsafeRead)
 import Data.Array.ST
 import Data.Coerce
 import Data.Foldable (for_)
+import Data.Functor (($>))
+import Data.List (sortOn)
 import qualified Data.Map.Strict as Map
 import Data.Traversable (for)
 import GHC.Generics (Generic)
@@ -18,6 +20,12 @@ import Prettyprinter
 import Prettyprinter.Internal (renderShowS)
 import Prettyprinter.Render.String (renderString)
 import Test.QuickCheck (Arbitrary)
+import qualified Text.Megaparsec as Mega
+import Debug.Trace (traceShowId)
+
+directionParser :: [Char] -> Parser Direction
+directionParser =
+  Mega.choice . fmap (\(d, c) -> Mega.chunk [c] $> d) . zip [minBound .. maxBound :: Direction]
 
 data Direction = North | South | West | East
   deriving stock (Show, Eq, Generic, Bounded, Enum)
@@ -60,6 +68,9 @@ rotate t Position {..} =
     TRight ->
       Position ((-1) * fromIntegral y) $ fromIntegral x
 
+divPosition :: Position -> Position -> Position
+divPosition p1 p2 = Position (p1.x `div` p2.x) (p1.y `div` p2.y)
+
 directionToVector :: Direction -> Position
 directionToVector = \case
   North -> Position 0 (-1)
@@ -72,15 +83,17 @@ applyF 0 _ = id
 applyF x f = f . applyF (x - 1) f
 
 newtype Width = Width {getWidth' :: Int}
-  deriving newtype (Num, Ord, Ix, Enum, Real, Integral, Arbitrary)
+  deriving newtype (Num, Ord, Ix, Enum, Real, Integral, Arbitrary, Pretty)
   deriving stock (Generic, Show, Eq)
 
 newtype Height = Height {getHeight' :: Int}
-  deriving newtype (Num, Ord, Ix, Enum, Real, Integral, Arbitrary)
+  deriving newtype (Num, Ord, Ix, Enum, Real, Integral, Arbitrary, Pretty)
   deriving stock (Generic, Show, Eq)
 
 data Position = Position {x :: Width, y :: Height}
   deriving stock (Show, Generic, Eq, Ord)
+instance Pretty Position where 
+  pretty p = "(" <> pretty p.x <> "," <> pretty p.y <> ")"
 
 instance Num Position where
   p1 + p2 = Position (p1 ^. #x + p2 ^. #x) (p1 ^. #y + p2 ^. #y)
@@ -258,7 +271,26 @@ printBoard board = do
 
 indexBoard :: [[a]] -> [[(Position, a)]]
 indexBoard elements =
-  let
-    indexedX = fmap indexed elements
-    indexedY = indexed indexedX
-  in fmap (\(x, r) -> (\(y, e) -> (Position (Width x) (Height y), e)) <$> r) indexedY
+  let indexedX = fmap indexed elements
+      indexedY = indexed indexedX
+   in fmap (\(x, r) -> (\(y, e) -> (Position (Width x) (Height y), e)) <$> r) indexedY
+
+printMap :: [Position] -> String
+printMap positions =
+  let sortedX = sortOn (\x -> x.x) positions
+      sortedY = sortOn (\x -> x.y) positions
+      minX = traceShowId $ (head sortedX).x
+      minY = traceShowId $ (head sortedY).y
+      maxX = traceShowId $ (last sortedX).x
+      maxY = traceShowId $ (last sortedY).y
+      isIn a = a `elem` positions
+   in do
+        y <- [minY - 1 .. maxY + 1]
+        x <- [minX - 1 .. maxX + 2]
+        pure $
+          if x == maxX + 2
+            then '\n'
+            else
+              if isIn (Position x y)
+                then '#'
+                else '.'
