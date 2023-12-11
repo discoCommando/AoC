@@ -1,0 +1,235 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.35.2.
+--
+-- see: https://github.com/sol/hpack
+
+name:               aoc2023
+version:            0.1.0.0
+description:        Please see the README on GitHub at <https://github.com/githubuser/aoc2023#readme>
+homepage:           https://github.com/githubuser/aoc2023#readme
+bug-reports:        https://github.com/githubuser/aoc2023/issues
+license:            BSD3
+license-file:       LICENSE
+author:             Author name here
+maintainer:         example@example.com
+copyright:          2020 Author name here
+build-type:         Simple
+extra-source-files:
+      README.md
+      ChangeLog.md
+
+source-repository head
+    type: git
+    location: https://github.com/githubuser/aoc2023
+
+library
+    exposed-modules:
+          Board
+          Common
+          Day00
+          Day01
+          Day02
+          Day03
+          Day04
+          Day05
+          NumberHelper
+          Parseable
+          Queue
+          RawBoard
+          STState
+    other-modules:
+          Paths_aoc2023
+    hs-source-dirs:
+          src
+    default-extensions:
+          BangPatterns
+          ConstraintKinds
+          DataKinds
+          DefaultSignatures
+          DeriveAnyClass
+          DeriveDataTypeable
+          DeriveFoldable
+          DeriveFunctor
+          DeriveGeneric
+          DeriveTraversable
+          DerivingStrategies
+          DerivingVia
+          DuplicateRecordFields
+          FlexibleContexts
+          FlexibleInstances
+          FunctionalDependencies
+          GeneralizedNewtypeDeriving
+          InstanceSigs
+          MultiParamTypeClasses
+          MultiWayIf
+          NamedFieldPuns
+          LambdaCase
+          OverloadedLabels
+          OverloadedStrings
+          PatternSynonyms
+          PolyKinds
+          QuasiQuotes
+          RankNTypes
+          RecordWildCards
+          ScopedTypeVariables
+          StandaloneDeriving
+          TupleSections
+          TypeApplications
+          TypeOperators
+          ViewPatterns
+          OverloadedRecordDot
+          DuplicateRecordFields
+    ghc-options: -fwarn-unused-binds -Werror -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules
+    build-tool-depends:
+          hspec-discover:hspec-discover
+    build-depends:
+          QuickCheck
+        , array
+        , base >=4.7 && <5
+        , clock
+        , containers
+        , formatting
+        , generic-lens
+        , hspec
+        , lens
+        , linear
+        , megaparsec
+        , mtl
+        , prettyprinter
+    default-language: Haskell2010
+
+executable aoc2023-exe
+    main-is: Main.hs
+    other-modules:
+          Paths_aoc2023
+    hs-source-dirs:
+          app
+    default-extensions:
+          BangPatterns
+          ConstraintKinds
+          DataKinds
+          DefaultSignatures
+          DeriveAnyClass
+          DeriveDataTypeable
+          DeriveFoldable
+          DeriveFunctor
+          DeriveGeneric
+          DeriveTraversable
+          DerivingStrategies
+          DerivingVia
+          DuplicateRecordFields
+          FlexibleContexts
+          FlexibleInstances
+          FunctionalDependencies
+          GeneralizedNewtypeDeriving
+          InstanceSigs
+          MultiParamTypeClasses
+          MultiWayIf
+          NamedFieldPuns
+          LambdaCase
+          OverloadedLabels
+          OverloadedStrings
+          PatternSynonyms
+          PolyKinds
+          QuasiQuotes
+          RankNTypes
+          RecordWildCards
+          ScopedTypeVariables
+          StandaloneDeriving
+          TupleSections
+          TypeApplications
+          TypeOperators
+          ViewPatterns
+          OverloadedRecordDot
+          DuplicateRecordFields
+    ghc-options: -fwarn-unused-binds -Werror -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -threaded -rtsopts -with-rtsopts=-N
+    build-tool-depends:
+          hspec-discover:hspec-discover
+    build-depends:
+          QuickCheck
+        , aoc2023
+        , array
+        , base >=4.7 && <5
+        , clock
+        , containers
+        , formatting
+        , generic-lens
+        , hspec
+        , lens
+        , linear
+        , megaparsec
+        , mtl
+        , prettyprinter
+    default-language: Haskell2010
+
+test-suite aoc2023-test
+    type: exitcode-stdio-1.0
+    main-is: Spec.hs
+    other-modules:
+          Day00Spec
+          Day01Spec
+          Day02Spec
+          Day03Spec
+          Day04Spec
+          Day05Spec
+          Paths_aoc2023
+    hs-source-dirs:
+          test
+    default-extensions:
+          BangPatterns
+          ConstraintKinds
+          DataKinds
+          DefaultSignatures
+          DeriveAnyClass
+          DeriveDataTypeable
+          DeriveFoldable
+          DeriveFunctor
+          DeriveGeneric
+          DeriveTraversable
+          DerivingStrategies
+          DerivingVia
+          DuplicateRecordFields
+          FlexibleContexts
+          FlexibleInstances
+          FunctionalDependencies
+          GeneralizedNewtypeDeriving
+          InstanceSigs
+          MultiParamTypeClasses
+          MultiWayIf
+          NamedFieldPuns
+          LambdaCase
+          OverloadedLabels
+          OverloadedStrings
+          PatternSynonyms
+          PolyKinds
+          QuasiQuotes
+          RankNTypes
+          RecordWildCards
+          ScopedTypeVariables
+          StandaloneDeriving
+          TupleSections
+          TypeApplications
+          TypeOperators
+          ViewPatterns
+          OverloadedRecordDot
+          DuplicateRecordFields
+    ghc-options: -fwarn-unused-binds -Werror -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -threaded -rtsopts -with-rtsopts=-N
+    build-tool-depends:
+          hspec-discover:hspec-discover
+    build-depends:
+          QuickCheck
+        , aoc2023
+        , array
+        , base >=4.7 && <5
+        , clock
+        , containers
+        , formatting
+        , generic-lens
+        , hspec
+        , lens
+        , linear
+        , megaparsec
+        , mtl
+        , prettyprinter
+    default-language: Haskell2010

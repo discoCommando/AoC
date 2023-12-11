@@ -12,11 +12,17 @@
         pkgs = import nixpkgs {
           inherit system;
         };
-        ghc = pkgs.haskellPackages.ghc;
+        ghc = pkgs.haskell.compiler.ghc948;
       in
       {
+        # instruction for installing:
+        # Install pkgs.haskell-language-server first
+        # run `haskell-language-server-wrapper` to see which ghc version it was compiled with 
+        # Then just install a compatible ghc version.
         devShell = pkgs.mkShell {
-          buildInputs = [ ghc pkgs.haskellPackages.cabal-install pkgs.haskell-language-server ];
+          buildInputs = [ ghc pkgs.haskellPackages.cabal-install pkgs.haskell-language-server pkgs.ghcid pkgs.haskellPackages.implicit-hie pkgs.hpack pkgs.treefmt     pkgs.haskellPackages.hspec-discover
+
+           ];
         };
       }
     );
