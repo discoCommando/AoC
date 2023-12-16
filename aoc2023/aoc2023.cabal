@@ -33,6 +33,7 @@ library
           Day03
           Day04
           Day05
+          Interval
           NumberHelper
           Parseable
           Queue
@@ -80,7 +81,7 @@ library
           ViewPatterns
           OverloadedRecordDot
           DuplicateRecordFields
-    ghc-options: -fwarn-unused-binds -Werror -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules
+    ghc-options: -W -Werror -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -prof -fprof-auto
     build-tool-depends:
           hspec-discover:hspec-discover
     build-depends:
@@ -143,7 +144,7 @@ executable aoc2023-exe
           ViewPatterns
           OverloadedRecordDot
           DuplicateRecordFields
-    ghc-options: -fwarn-unused-binds -Werror -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -threaded -rtsopts -with-rtsopts=-N
+    ghc-options: -W -Werror -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -prof -fprof-auto -threaded -rtsopts -with-rtsopts=-N
     build-tool-depends:
           hspec-discover:hspec-discover
     build-depends:
@@ -173,6 +174,7 @@ test-suite aoc2023-test
           Day03Spec
           Day04Spec
           Day05Spec
+          IntervalSpec
           Paths_aoc2023
     hs-source-dirs:
           test
@@ -214,7 +216,7 @@ test-suite aoc2023-test
           ViewPatterns
           OverloadedRecordDot
           DuplicateRecordFields
-    ghc-options: -fwarn-unused-binds -Werror -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -threaded -rtsopts -with-rtsopts=-N
+    ghc-options: -W -Werror -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -prof -fprof-auto -threaded -rtsopts -with-rtsopts=-N
     build-tool-depends:
           hspec-discover:hspec-discover
     build-depends:

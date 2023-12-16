@@ -1,7 +1,7 @@
-module Day00Spec where
+module Day04Spec where
 
 import Common
-import Day00 hiding (main)
+import Day04 hiding (main)
 import Test.Hspec
 
 -- import Text.RawString.QQ (r)

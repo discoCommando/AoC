@@ -1,5 +1,8 @@
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
+
+-- {-# LANGUAGE UndecidableInstances #-}
 
 -- taken from https://github.com/blinry/advent-of-code-2019/blob/master/Common.hs
 
@@ -70,7 +73,9 @@ aoc n solution = do
     putStr "Parsing input..."
     a <- evaluate problem'
     case a of
-      Left e -> throwIO $ toException e
+      Left e -> do
+        putStrLn $ Mega.errorBundlePretty e
+        throwIO e
       Right a' -> pure a'
   benchmark $ putStr $ "Part 1: " ++ show (part1 solution problem)
   benchmark $ putStr $ "Part 2: " ++ show (part2 solution problem)
@@ -140,3 +145,20 @@ logMe' a = seq (trace (show a) a) a
 
 spaces :: Parser ()
 spaces = Mega.hspace
+
+-- class Loggable a where
+--   run :: a -> a
+
+-- instance {-# OVERLAPPABLE #-} (Show a, Loggable b) => Loggable (a -> b) where
+--   run :: forall a b. (Show a, Loggable b) => (a -> b) -> a -> b
+--   run f x = traceShow x $ run @b $ f x
+
+-- instance {-# OVERLAPPABLE #-} (Show a) => Loggable (a -> b) where
+--   run :: forall a b. (Show a) => (a -> b) -> a -> b
+--   run f x = traceShow x $ f x
+
+-- -- instance {-# OVERLAPPABLE #-} (Show a) => Loggable a where
+-- --   run a = traceShowId a
+
+-- logF' :: (Loggable x) => String -> x -> x
+-- logF' s x = trace s $ run x
