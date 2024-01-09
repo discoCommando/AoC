@@ -4,7 +4,7 @@ module Interval where
 import Data.List (sortOn)
 
 -- | Single interval, start is always <= end, also for now working on Ints only
-data SingleInterval = SingleInterval {start :: Int, end :: Int}
+data SingleInterval = SingleInterval {start :: Integer, end :: Integer}
   deriving stock (Show, Eq)
 
 -- | For now assuming that both ends are closed
@@ -28,18 +28,23 @@ _joinSingleIntervals i1 i2 =
         then Nothing
         else Just $ SingleInterval i1.start (max i1.end i2.end)
 
-mkSingleInterval :: Int -> Int -> SingleInterval
+mkSingleInterval :: Integer -> Integer -> SingleInterval
 mkSingleInterval start end =
   if end < start
     then undefined
     else SingleInterval start end
 
 -- | Assuming that it's closed both ends
-singleton :: Int -> Int -> Interval
+singleton :: Integer -> Integer -> Interval
 singleton start end =
   Interval $ pure $ mkSingleInterval start end
 
-fromList :: [(Int, Int)] -> Interval
+-- | Assuming that it's closed both ends
+singleton' :: SingleInterval -> Interval
+singleton' s =
+  Interval $ pure $ s
+
+fromList :: [(Integer, Integer)] -> Interval
 fromList =
   fromList' . map (uncurry mkSingleInterval)
 
@@ -47,6 +52,10 @@ fromList' :: [SingleInterval] -> Interval
 fromList' =
   union mempty -- using union to make sure that all single intervals are "merged"
     . Interval
+
+toList :: Interval -> [(Integer, Integer)]
+toList =
+  map (\(SingleInterval s e) -> (s, e)) . (.intervals)
 
 instance Semigroup Interval where
   (<>) = union
@@ -91,6 +100,10 @@ intersect i1 i2 =
         Nothing -> []
         Just i -> [i]
 
+mapIntervals :: (SingleInterval -> SingleInterval) -> Interval -> Interval
+mapIntervals f i =
+  fromList' $ fmap f $ intervals i
+
 -- | Subtracts two intervals.
 _subtractSingleIntervals :: SingleInterval -> SingleInterval -> [SingleInterval]
 _subtractSingleIntervals i1 i2 =
@@ -129,7 +142,7 @@ _subtractSingleIntervals i1 i2 =
       GT -> [i1]
       --     x   x
       -- y   y
-      EQ -> [mkSingleInterval (i2.end + 1) i1.end]
+      EQ -> if i1.start == i1.end then [] else [mkSingleInterval (i2.end + 1) i1.end]
       LT -> case compare i1.end i2.end of
         --       x   x
         -- y            y

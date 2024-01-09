@@ -79,7 +79,7 @@ createResults :: [InputLine] -> Results
 createResults = Map.fromList . fmap (\(id', i) -> (id', [(id' + 1) .. (howManyWinning i + id')])) . zip [1 ..]
 
 part2' :: [InputLine] -> Int
-part2' = sum . Map.elems . logMe' . resultsToPower . logMe' . createResults
+part2' = sum . Map.elems . logMe' "results" . resultsToPower . logMe' "createResults" . createResults
 
 main =
   aoc

@@ -17,7 +17,7 @@ instance Arbitrary Interval where
     pure $ fromList' intervals
 
 spec =
-  fdescribe "operations" $ do
+  describe "operations" $ do
     describe "union" $ do
       it "should be commutative" $
         property $
@@ -57,3 +57,6 @@ spec =
       it "with intersect" $
         property $
           \i1 i2 -> subtract i1 i2 `shouldBe` subtract i1 (intersect i1 i2)
+      it "with union" $
+        property $
+          \i1 i2 -> subtract (union i1 i2) i2 `shouldBe` subtract i1 (intersect i1 i2)

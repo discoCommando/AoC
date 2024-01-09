@@ -15,13 +15,13 @@ import Data.Functor (($>))
 import Data.List (sortOn)
 import qualified Data.Map.Strict as Map
 import Data.Traversable (for)
+import Debug.Trace (traceShowId)
 import GHC.Generics (Generic)
 import Prettyprinter
 import Prettyprinter.Internal (renderShowS)
 import Prettyprinter.Render.String (renderString)
 import Test.QuickCheck (Arbitrary)
 import qualified Text.Megaparsec as Mega
-import Debug.Trace (traceShowId)
 
 directionParser :: [Char] -> Parser Direction
 directionParser =
@@ -29,6 +29,20 @@ directionParser =
 
 data Direction = North | South | West | East
   deriving stock (Show, Eq, Generic, Bounded, Enum)
+
+-- throws an error if the positions are not adjacent
+-- p1 .. p2
+-- p1 `theDirectionOf` p2 = East
+-- ie p2 is on the East of p1
+theDirectionOf :: Position -> Position -> Direction
+theDirectionOf p1 p2 =
+  let diff = p2 - p1
+   in case diff of
+        Position 0 (-1) -> North
+        Position 0 1 -> South
+        Position (-1) 0 -> West
+        Position 1 0 -> East
+        _ -> error $ "positions are not adjacent: " <> show p1 <> " " <> show p2
 
 data Turn = TLeft | TRight
   deriving stock (Show, Eq, Generic, Bounded, Enum)
@@ -92,7 +106,8 @@ newtype Height = Height {getHeight' :: Int}
 
 data Position = Position {x :: Width, y :: Height}
   deriving stock (Show, Generic, Eq, Ord)
-instance Pretty Position where 
+
+instance Pretty Position where
   pretty p = "(" <> pretty p.x <> "," <> pretty p.y <> ")"
 
 instance Num Position where
@@ -161,7 +176,7 @@ instance Board (STBoard s) e (ST s) where
     w <- readArray (board ^. #getSTBoard) $ position ^. #y
     writeArray w (position ^. #x) value
 
-isInBounds :: Board arr e m => Position -> arr e -> m Bool
+isInBounds :: (Board arr e m) => Position -> arr e -> m Bool
 isInBounds position board = do
   width <- getWidth board
   height <- getHeight board
@@ -173,7 +188,7 @@ isInBounds position board = do
         position.y < height
       ]
 
-getAt :: Board arr e m => Position -> arr e -> m (Maybe e)
+getAt :: (Board arr e m) => Position -> arr e -> m (Maybe e)
 getAt p a = do
   inBounds <- isInBounds p a
   if inBounds
@@ -239,8 +254,8 @@ getAllPositions board = do
       pure $ Position x y
   pure $ join p
 
-foldM :: (Board arr e m) => arr e -> acc -> (e -> Position -> acc -> m acc) -> m acc
-foldM board acc f = do
+foldMBoard :: (Board arr e m) => arr e -> acc -> (e -> Position -> acc -> m acc) -> m acc
+foldMBoard board acc f = do
   width <- getWidth board
   height <- getHeight board
   Control.Monad.foldM
@@ -257,14 +272,23 @@ foldM board acc f = do
     acc
     [0 .. width - 1]
 
-printBoard :: (Board arr e m, Pretty e) => arr e -> m String
-printBoard board = do
+findBoard :: (Board arr e m) => arr e -> (e -> Bool) -> m (Maybe Position)
+findBoard board f = foldMBoard board Nothing $ \e p acc -> do
+  pure $ case acc of
+    Just _ -> acc
+    Nothing ->
+      if f e
+        then Just p
+        else Nothing
+
+printBoard :: (Board arr e m, Pretty e') => arr e -> (e -> e') -> m String
+printBoard board f = do
   width <- getWidth board
   height <- getHeight board
   p <- for [0 .. height - 1] $ \y -> do
     ss <- for [0 .. width - 1] $ \x -> do
       e <- unsafeGet (Position x y) board
-      let s = renderString . layoutCompact $ pretty e
+      let s = renderString . layoutCompact $ pretty $ f e
       pure $ s ++ ", "
     pure $ "[ " ++ join ss ++ " ]\n"
   pure $ join p

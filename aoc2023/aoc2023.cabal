@@ -25,6 +25,7 @@ source-repository head
 
 library
     exposed-modules:
+          BinSearch
           Board
           Common
           Day00
@@ -33,6 +34,11 @@ library
           Day03
           Day04
           Day05
+          Day06
+          Day07
+          Day08
+          Day09
+          Day10
           Interval
           NumberHelper
           Parseable
@@ -81,7 +87,7 @@ library
           ViewPatterns
           OverloadedRecordDot
           DuplicateRecordFields
-    ghc-options: -W -Werror -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -prof -fprof-auto
+    ghc-options: -W -Wno-unused-imports -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules
     build-tool-depends:
           hspec-discover:hspec-discover
     build-depends:
@@ -97,6 +103,7 @@ library
         , linear
         , megaparsec
         , mtl
+        , pretty-simple
         , prettyprinter
     default-language: Haskell2010
 
@@ -144,7 +151,7 @@ executable aoc2023-exe
           ViewPatterns
           OverloadedRecordDot
           DuplicateRecordFields
-    ghc-options: -W -Werror -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -prof -fprof-auto -threaded -rtsopts -with-rtsopts=-N
+    ghc-options: -W -Wno-unused-imports -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -threaded -rtsopts -with-rtsopts=-N
     build-tool-depends:
           hspec-discover:hspec-discover
     build-depends:
@@ -161,6 +168,7 @@ executable aoc2023-exe
         , linear
         , megaparsec
         , mtl
+        , pretty-simple
         , prettyprinter
     default-language: Haskell2010
 
@@ -168,12 +176,19 @@ test-suite aoc2023-test
     type: exitcode-stdio-1.0
     main-is: Spec.hs
     other-modules:
+          BinSearchSpec
+          CommonSpec
           Day00Spec
           Day01Spec
           Day02Spec
           Day03Spec
           Day04Spec
           Day05Spec
+          Day06Spec
+          Day07Spec
+          Day08Spec
+          Day09Spec
+          Day10Spec
           IntervalSpec
           Paths_aoc2023
     hs-source-dirs:
@@ -216,7 +231,7 @@ test-suite aoc2023-test
           ViewPatterns
           OverloadedRecordDot
           DuplicateRecordFields
-    ghc-options: -W -Werror -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -prof -fprof-auto -threaded -rtsopts -with-rtsopts=-N
+    ghc-options: -W -Wno-unused-imports -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -threaded -rtsopts -with-rtsopts=-N
     build-tool-depends:
           hspec-discover:hspec-discover
     build-depends:
@@ -233,5 +248,6 @@ test-suite aoc2023-test
         , linear
         , megaparsec
         , mtl
+        , pretty-simple
         , prettyprinter
     default-language: Haskell2010

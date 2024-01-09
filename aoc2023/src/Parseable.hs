@@ -7,7 +7,6 @@ module Parseable where
 
 import Common (Parser, parseStringAs, unsafeParse)
 import Control.Monad (join)
-import Data.Kind (Constraint)
 import Data.Typeable
 import GHC.TypeLits
 import qualified Text.Megaparsec as Mega

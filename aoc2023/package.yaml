@@ -40,6 +40,7 @@ dependencies:
   - QuickCheck
   - mtl
   - prettyprinter
+  - pretty-simple
 
 default-extensions:
   - BangPatterns
@@ -108,7 +109,8 @@ tests:
 
 ghc-options:
   - -W
-  - -Werror
+  # - -Werror
+  - -Wno-unused-imports
   - -Wno-missing-exported-signatures # missing-exported-signatures turns off the more strict -Wmissing-signatures.
   - -Wno-missing-import-lists # Requires explicit imports of _every_ function (e.g. ‘$’); too strict
   - -Wno-missed-specialisations # When GHC can’t specialize a polymorphic function.
@@ -119,6 +121,5 @@ ghc-options:
   - -Wno-monomorphism-restriction # Don’t warn if the monomorphism restriction is used
   - -Wno-missing-export-lists # Don't warn if export list is missing
   - -Wno-missing-home-modules # Don't warn in GHCi when loading modules (this is a bogus warning)
-  - -prof
-  - -fprof-auto
+  # - -enable-profiling
   # - -fplugin=RecordDotPreprocessor

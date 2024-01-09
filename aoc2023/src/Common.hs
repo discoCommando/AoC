@@ -10,9 +10,12 @@ module Common
   ( module X,
     Solution (..),
     benchmark,
+    parseIntsOnly,
+    primeFactors,
     aoc,
     tbd,
     toInt,
+    pInt,
     listParser,
     takeWhen,
     unsafeMaybe,
@@ -28,6 +31,7 @@ module Common
     log',
     logEmpty',
     spaces,
+    nww,
     logMe',
   )
 where
@@ -40,15 +44,16 @@ import Data.Generics.Labels ()
 import Data.Generics.Product as X hiding (IsList, list)
 import Data.Generics.Sum as X
 import Data.Void
+import Debug.Pretty.Simple (pTrace)
 import Debug.Trace as X
 import Formatting
 import Formatting.Clock
-import GHC.Base (Alternative ((<|>)))
 import GHC.Exts as X (IsList)
 import GHC.Generics as X (Generic)
 import System.Clock
 import qualified Text.Megaparsec as Mega
 import qualified Text.Megaparsec.Char as Mega
+import qualified Text.Megaparsec.Char.Lexer as Mega
 
 data Solution a b c = Solution
   { parse :: Parser a,
@@ -135,13 +140,13 @@ tryOneOf [x] = x
 tryOneOf (x : xs) = Mega.try x <|> tryOneOf xs
 
 log' :: (Show a, Show b) => String -> a -> b -> b
-log' s a b = trace (s <> " for " <> show a <> "\n" <> s <> ": " <> show b) b
+log' s a b = pTrace (s <> " for " <> show a <> "\n" <> s <> ": " <> show b) b
 
 logEmpty' :: (Show a) => String -> (b -> a) -> b -> b
-logEmpty' s f b = trace (s <> " for " <> show (f b)) b
+logEmpty' s f b = pTrace (s <> " for " <> show (f b)) b
 
-logMe' :: (Show a) => a -> a
-logMe' a = seq (trace (show a) a) a
+logMe' :: (Show a) => String -> a -> a
+logMe' s a = seq (pTrace (s <> " for " <> show a) a) a
 
 spaces :: Parser ()
 spaces = Mega.hspace
@@ -162,3 +167,40 @@ spaces = Mega.hspace
 
 -- logF' :: (Loggable x) => String -> x -> x
 -- logF' s x = trace s $ run x
+
+-- | Parse a list of integers, separated by any number of non-digit characters.
+parseIntsOnly :: Parser [Int]
+parseIntsOnly =
+  Mega.sepBy Mega.decimal $
+    Mega.many (Mega.letterChar <|> Mega.symbolChar <|> Mega.punctuationChar <|> (spaces >> pure 'c'))
+
+-- rozklad na iloczyn czynnikow pierwszych
+primeFactors :: Int -> [Int]
+primeFactors n = factor n 2
+  where
+    factor n d
+      | n < 2 = []
+      | n `mod` d == 0 = d : factor (n `div` d) d
+      | otherwise = factor n (d + 1)
+
+nww :: Int -> Int -> Int
+nww a b =
+  if a <= 1
+    then b
+    else
+      if b <= 1
+        then a
+        else
+          let primeA = primeFactors a
+              primeB = primeFactors b
+           in product $ commonPart primeA primeB
+  where
+    commonPart [] x = x
+    commonPart y [] = y
+    commonPart (x : xs) (y : ys)
+      | x == y = x : commonPart xs ys
+      | x < y = x : commonPart xs (y : ys)
+      | otherwise = y : commonPart (x : xs) ys
+
+pInt :: Parser Int
+pInt = Mega.signed spaces Mega.decimal

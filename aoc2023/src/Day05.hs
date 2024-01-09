@@ -3,15 +3,18 @@ module Day05 where
 import Common
 import Control.Exception (Exception (fromException))
 import Data.Data
+import Interval
+import Interval (SingleInterval)
 import Parseable
 import qualified Text.Megaparsec as Mega
 import qualified Text.Megaparsec.Char as Mega
 import qualified Text.Megaparsec.Char.Lexer as Mega
 import qualified Text.Megaparsec.Debug as Mega
+import Prelude hiding (subtract)
 
 data InputLine = InputLine {} deriving stock (Generic, Show, Eq)
 
-data Range = Range {start :: Int, destination :: Int, size :: Int} deriving stock (Generic, Show, Eq)
+data Range = Range {start :: Integer, destination :: Integer, size :: Integer} deriving stock (Generic, Show, Eq)
 
 data Mapping = Mapping
   { from :: String,
@@ -21,7 +24,7 @@ data Mapping = Mapping
   deriving stock (Generic, Show, Eq)
 
 data Input = Input
-  { seeds :: [Int],
+  { seeds :: [Integer],
     maps :: [Mapping]
   }
   deriving stock (Generic, Show, Eq)
@@ -33,7 +36,7 @@ pMapping = do
   let to = fromTo !! 2
   spaces >> Mega.chunk "map:" >> Mega.newline
   mappings <- flip Mega.endBy1 (Mega.try ((Mega.newline >> pure ()) <|> Mega.eof)) $ Mega.try $ do
-    numbers <- logMe' <$> Mega.sepBy1 (Mega.decimal) spaces
+    numbers <- logMe' "numbers" <$> Mega.sepBy1 (Mega.decimal) spaces
     pure $ Range (numbers !! 0) (numbers !! 1) $ numbers !! 2
   pure Mapping {..}
 
@@ -45,7 +48,7 @@ pInput = do
   maps <- Mega.sepEndBy pMapping Mega.newline
   pure Input {..}
 
-solution :: Solution Input Int Int
+solution :: Solution Input Integer Integer
 solution =
   Solution
     { parse = pInput, -- No parsing required.
@@ -70,7 +73,7 @@ findMapping name (m : ms) =
     then Just m
     else findMapping name ms
 
-findDestinationValue :: [Range] -> Int -> Int
+findDestinationValue :: [Range] -> Integer -> Integer
 findDestinationValue [] i = i
 findDestinationValue (r : rs) i =
   logEmpty' "findDestinationValue" (\res -> (r, i, res)) $
@@ -78,31 +81,69 @@ findDestinationValue (r : rs) i =
       then (i - r.destination) + r.start
       else findDestinationValue rs i
 
-findValue :: String -> [Mapping] -> Int -> Int
+findValue :: String -> [Mapping] -> Integer -> Integer
 findValue source mappings i =
   logEmpty' ("findValue " ++ source ++ " " ++ show i) id $
     case findMapping source mappings of
       Nothing -> i
       Just m -> findValue m.to mappings $ findDestinationValue m.mappings i
 
-part1' :: Input -> Int
-part1' (logMe' -> input) = minimum $ (\i -> findValue ((.from) $ head input.maps) input.maps i) <$> input.seeds
+part1' :: Input -> Integer
+part1' (logMe' "part1Input" -> input) = minimum $ (\i -> findValue ((.from) $ head input.maps) input.maps i) <$> input.seeds
 
-findDestinationRanges :: [Range] -> (Int, Int) -> [Range]
-findDestinationRanges [] _ = []
-findDestinationRanges (r : rs) (start, end) =
-  if start >= r.destination && start < r.destination + r.size
-    then
-      Range
-        { start = r.start,
-          destination = start,
-          size = end - start + 1
-        }
-        : findDestinationRanges rs (r.destination + r.size, end)
-    else r : findDestinationRanges rs (start, end)
+mkSingleInterval' :: Integer -> Integer -> SingleInterval
+mkSingleInterval' x y = mkSingleInterval x (x + y - 1)
 
-part2' :: Input -> Int
-part2' = const 1
+data Part2 = Part2
+  { initialInterval :: Interval,
+    mappings :: [Mapping]
+  }
+
+i2p2 :: Input -> Part2
+i2p2 Input {..} =
+  Part2
+    { initialInterval = fromList' $ inits seeds,
+      mappings = maps
+    }
+  where
+    inits :: [Integer] -> [SingleInterval]
+    inits [] = []
+    inits (_ : []) = undefined -- should not happen
+    inits (x : y : xs) = mkSingleInterval' x y : inits xs
+
+-- intervalMapping :: Mapping -> Interval -> Interval
+-- intervalMapping
+
+singleIntervalMapping :: [Range] -> Interval -> Interval
+singleIntervalMapping [] i = i
+singleIntervalMapping (r : rest) i =
+  let source = mkSingleInterval' r.start r.size
+      destination = mkSingleInterval' r.destination r.size
+      intersection = intersect i $ singleton' destination
+      mappedIntersection = mapIntervals (mapSingleInterval destination source) intersection
+      subtraction = subtract i $ singleton' $ destination
+   in union mappedIntersection $ singleIntervalMapping rest $ subtraction
+  where
+    mapSingleInterval :: SingleInterval -> SingleInterval -> SingleInterval -> SingleInterval
+    mapSingleInterval source destination s =
+      mkSingleInterval (destination.start + (s.start - source.start)) (destination.end + (s.end - source.end))
+
+findValues :: String -> [Mapping] -> Interval -> Interval
+findValues source mappings i =
+  case findMapping source mappings of
+    Nothing -> i
+    Just m -> findValues m.to mappings $ logEmpty' ("findValues " ++ source ++ " " ++ show i ++ " " ++ show m) id $ singleIntervalMapping m.mappings i
+  where
+
+part2' :: Input -> Integer
+part2' i =
+  let p2 = i2p2 i
+   in fst $
+        head $
+          logMe' "results" $
+            toList $
+              findValues ((.from) $ head $ maps i) (maps i) $
+                p2.initialInterval
 
 main =
   aoc
