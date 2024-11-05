@@ -1,5 +1,7 @@
 {-# LANGUAGE LiberalTypeSynonyms #-}
+
 module RawBoard where
+
 import Board
 
 newtype RawBoard a = RawBoard {board :: [[a]]}
@@ -10,4 +12,3 @@ newtype RawBoard a = RawBoard {board :: [[a]]}
 --   newBoard = pure . RawBoard
 --   unsafeGet Position{..} RawBoard{..} = pure $ board !! y.getHeight' !! x.getWidth'
 --   unsafeSet Position{..} el RawBoard{..} =
-

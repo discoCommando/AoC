@@ -1,4 +1,5 @@
 module Queue where
+
 import qualified Data.Sequence as Seq
 import GHC.Generics (Generic)
 
@@ -10,9 +11,8 @@ push :: a -> Queue a -> Queue a
 push a (Queue s) = Queue (s Seq.|> a)
 
 pop :: Queue a -> Maybe (a, Queue a)
-pop (Queue (first Seq.:<| rest))  = Just (first, Queue rest)
+pop (Queue (first Seq.:<| rest)) = Just (first, Queue rest)
 pop _ = Nothing
 
 fromList :: [a] -> Queue a
 fromList = Queue . Seq.fromList
-

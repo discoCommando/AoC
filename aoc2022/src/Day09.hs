@@ -7,10 +7,10 @@ import Data.Data
 import Data.List (nub)
 import Debug.Trace (trace, traceShowId)
 import Parseable
+import Prettyprinter (pretty)
 import qualified Text.Megaparsec as Mega
 import qualified Text.Megaparsec.Char as Mega
 import qualified Text.Megaparsec.Char.Lexer as Mega
-import Prettyprinter (pretty)
 
 -- data InputLine = InputLine {} deriving stock (Generic, Show, Eq)
 

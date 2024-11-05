@@ -1,9 +1,9 @@
 module Day09Spec where
 
+import Board (Position (..), divPosition)
 import Common
 import Day09 hiding (main)
 import Test.Hspec
-import Board (Position(..), divPosition)
 
 -- import Text.RawString.QQ (r)
 
@@ -14,7 +14,7 @@ import Board (Position(..), divPosition)
 
 spec =
   describe "all" $ do
-    fit "all" $ do
+    it "all" $ do
       True `shouldBe` True
       False `shouldBe` False
       moveTail (Position 0 0) (Position 1 0) `shouldBe` Position 1 0

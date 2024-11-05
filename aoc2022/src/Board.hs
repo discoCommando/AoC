@@ -1,5 +1,3 @@
-{-# LANGUAGE AllowAmbiguousTypes #-}
-
 module Board where
 
 import Common (Parser)
@@ -15,13 +13,13 @@ import Data.Functor (($>))
 import Data.List (sortOn)
 import qualified Data.Map.Strict as Map
 import Data.Traversable (for)
+import Debug.Trace (traceShowId)
 import GHC.Generics (Generic)
 import Prettyprinter
 import Prettyprinter.Internal (renderShowS)
 import Prettyprinter.Render.String (renderString)
 import Test.QuickCheck (Arbitrary)
 import qualified Text.Megaparsec as Mega
-import Debug.Trace (traceShowId)
 
 directionParser :: [Char] -> Parser Direction
 directionParser =
@@ -92,7 +90,8 @@ newtype Height = Height {getHeight' :: Int}
 
 data Position = Position {x :: Width, y :: Height}
   deriving stock (Show, Generic, Eq, Ord)
-instance Pretty Position where 
+
+instance Pretty Position where
   pretty p = "(" <> pretty p.x <> "," <> pretty p.y <> ")"
 
 instance Num Position where

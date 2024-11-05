@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.7.
+-- This file has been generated from package.yaml by hpack version 0.35.2.
 --
 -- see: https://github.com/sol/hpack
 
@@ -36,6 +36,9 @@ library
       Day07
       Day08
       Day09
+      Day10
+      Day11
+      Day12
       Day2103
       Day2104
       Day2105
@@ -44,8 +47,11 @@ library
       Day2108
       Day2109
       Day2110
+      Dayartificial
+      DefaultMap
       Numeric
       Parseable
+      Parser
       Queue
       RawBoard
       STState
@@ -188,6 +194,9 @@ test-suite aoc2022-test
       Day07Spec
       Day08Spec
       Day09Spec
+      Day10Spec
+      Day11Spec
+      Day12Spec
       Day2103Spec
       Day2104Spec
       Day2105Spec
@@ -196,6 +205,7 @@ test-suite aoc2022-test
       Day2108Spec
       Day2109Spec
       Day2110Spec
+      DayartificialSpec
       Paths_aoc2022
   hs-source-dirs:
       test

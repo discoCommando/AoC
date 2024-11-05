@@ -1,0 +1,6 @@
+I1: 50%
+I2: 50% if <5
+I3: 40% if I1
+I4: 30% if I2 and <5
+I5: 10% if I3 and I4
+I6: 10% if I3

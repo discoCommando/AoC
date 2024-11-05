@@ -3,15 +3,17 @@
 
 -- taken from https://github.com/blinry/advent-of-code-2019/blob/master/Common.hs
 
-module Common (module X, Solution (..), benchmark, aoc, tbd, toInt, listParser, takeWhen, unsafeMaybe, unsafeParseExample, Parser, unsafeParse, parseStringAs, tryOneOf, unsafeGet', PrimitiveBoard, Point, getAtBoard) where
+module Common (module X, Solution (..), benchmark, aoc, tbd, toInt, listParser, takeWhen, unsafeMaybe, unsafeParseExample, Parser, unsafeParse, parseStringAs, tryOneOf, unsafeGet', PrimitiveBoard, Point, getAtBoard, (|>)) where
 
 import Control.Applicative as X (Alternative ((<|>)))
 import Control.Exception
 import qualified Control.Lens as X
+import Data.Function ((&))
 import Data.Functor
 import Data.Generics.Labels ()
 import Data.Generics.Product as X hiding (IsList, list)
 import Data.Generics.Sum as X
+import Data.Maybe (fromMaybe)
 import Data.Void
 import Debug.Trace
 import Formatting
@@ -87,6 +89,7 @@ unsafeGet' [] _ = undefined
 unsafeGet' (x : xs) l = if l == 0 then x else unsafeGet' xs (l - 1)
 
 type PrimitiveBoard a = [[a]]
+
 type Point = (Int, Int)
 
 getAtBoard :: Point -> PrimitiveBoard a -> Maybe a
@@ -97,9 +100,19 @@ getAtBoard (x, y) b
 
 parseStringAs :: String -> a -> Parser a
 parseStringAs s a =
-  Mega.chunk s >> pure a
+  Mega.chunk s Prelude.>> pure a
 
 tryOneOf :: [Parser a] -> Parser a
 tryOneOf [] = Mega.empty
 tryOneOf [x] = x
 tryOneOf (x : xs) = Mega.try x <|> tryOneOf xs
+
+(|>) :: a -> (a -> b) -> b
+(|>) = (&)
+
+infixl 1 |>
+
+-- (>>) :: (a -> b) -> (b -> c) -> a -> c
+-- (>>) f1 f2 a= f2 $ f1 a
+
+-- infixl 1 >>

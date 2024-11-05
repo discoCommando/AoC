@@ -152,15 +152,14 @@ type ViewingDistances = Map.Map Position [Int]
 viewingDistance :: [(Position, Cell)] -> ViewingDistances -> ViewingDistances
 viewingDistance [] vd = vd
 viewingDistance ((position, cell) : rest) vd =
-  let 
-    score' = length $ takeWhile (\(_, cell') -> cell'.value < cell.value) rest
-    score = if score' < length rest then score' + 1 else score' 
+  let score' = length $ takeWhile (\(_, cell') -> cell'.value < cell.value) rest
+      score = if score' < length rest then score' + 1 else score'
    in viewingDistance rest $ Map.alter (Just . maybe [score] (score :)) position vd
 
 part2' :: [InputLine] -> Int
 part2' input =
   maximum $
-    fmap (\(_, v) -> product v) $ 
+    fmap (\(_, v) -> product v) $
       Map.toList $
         viewAll' (flip $ foldr viewingDistance) input mempty
 
